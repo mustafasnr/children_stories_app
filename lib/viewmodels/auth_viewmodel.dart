@@ -23,6 +23,7 @@ class AuthViewModel extends ChangeNotifier {
   bool get hasCompletedOnboarding => _profile?.childAge != null;
   bool get hasFinishedAuthSelection => _hasFinishedAuthSelection;
   bool get isInitialized => _isInitialized;
+  bool get isAnonymous => _currentUser?.isAnonymous ?? true;
 
   AuthViewModel() {
     _currentUser = Supabase.instance.client.auth.currentUser;

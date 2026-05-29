@@ -4,6 +4,7 @@ import 'package:children_stories/app/theme/app_theme.dart';
 import 'package:children_stories/viewmodels/auth_viewmodel.dart';
 import 'package:children_stories/viewmodels/home_viewmodel.dart';
 import 'package:children_stories/viewmodels/subscription_viewmodel.dart';
+import 'package:children_stories/viewmodels/theme_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -18,6 +19,7 @@ class ChildrenStoriesApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthViewModel()),
         ChangeNotifierProvider(create: (_) => HomeViewModel()),
         ChangeNotifierProvider(create: (_) => SubscriptionViewModel()),
+        ChangeNotifierProvider(create: (_) => ThemeViewModel()),
       ],
       child: const _AppContent(),
     );
@@ -43,31 +45,25 @@ class _AppContentState extends State<_AppContent> {
 
   @override
   Widget build(BuildContext context) {
-    final authVM = context.watch<AuthViewModel>();
+    context.watch<AuthViewModel>();
+    final themeVM = context.watch<ThemeViewModel>();
 
-    if (!authVM.isInitialized) {
-      return MaterialApp(
-        title: 'Story Time',
-        theme: AppTheme.lightTheme,
-        debugShowCheckedModeBanner: false,
-        home: Scaffold(
-          body: Container(
-            decoration: const BoxDecoration(
-              gradient: AppColors.splashGradient,
-            ),
-            child: const Center(
-              child: CircularProgressIndicator(
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ),
-      );
-    }
+    // Change this variable to force a specific theme during development
+    // e.g. ThemeMode.light, ThemeMode.dark, or themeVM.themeMode
+    final activeThemeMode = themeVM.themeMode;
+
+    // Update dynamic AppColors current scheme based on activeThemeMode
+    final isDark =
+        activeThemeMode == ThemeMode.dark ||
+        (activeThemeMode == ThemeMode.system &&
+            MediaQuery.platformBrightnessOf(context) == Brightness.dark);
+    AppColors.current = isDark ? AppColors.darkScheme : AppColors.lightScheme;
 
     return MaterialApp.router(
       title: 'Story Time',
+      themeMode: activeThemeMode,
       theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
       routerConfig: _router,
       debugShowCheckedModeBanner: false,
     );

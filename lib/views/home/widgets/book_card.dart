@@ -17,11 +17,12 @@ class BookCard extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
+              color: Colors.black.withValues(
+                  alpha: AppColors.current == AppColors.darkScheme ? 0.2 : 0.06),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),

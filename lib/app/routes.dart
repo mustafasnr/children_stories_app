@@ -45,7 +45,10 @@ class AppRouter {
         }
 
         // 4. Bypassing auth views once authenticated and finished onboarding
-        if (isOnboarding || isLogin) return '/home';
+        if (isOnboarding || isLogin) {
+          if (authViewModel.isAnonymous) return null;
+          return '/home';
+        }
 
         return null;
       },

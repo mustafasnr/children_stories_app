@@ -87,9 +87,6 @@ class __OnboardingScreenContentState extends State<_OnboardingScreenContent> {
       body: SafeArea(
         child: Column(
           children: [
-            const SizedBox(height: 36),
-            _buildProgressBar(vm),
-            const SizedBox(height: 32),
             Expanded(
               child: PageView(
                 controller: _pageController,
@@ -104,101 +101,63 @@ class __OnboardingScreenContentState extends State<_OnboardingScreenContent> {
     );
   }
 
-  Widget _buildProgressBar(OnboardingViewModel vm) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    return Center(
-      child: SizedBox(
-        width: screenWidth * 0.5,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Row(
-            children: List.generate(vm.totalSteps, (index) {
-              final isActive = index <= vm.currentStep;
-              return Expanded(
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  margin: EdgeInsets.only(
-                    right: index < vm.totalSteps - 1 ? 8 : 0,
-                  ),
-                  height: 6,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(3),
-                    color: isActive
-                        ? AppColors.primary
-                        : AppColors.surfaceVariant,
-                    boxShadow: isActive
-                        ? [
-                            BoxShadow(
-                              color: AppColors.primary.withValues(alpha: 0.2),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ]
-                        : null,
-                  ),
-                ),
-              );
-            }),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildAgeStep(OnboardingViewModel vm) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: const BoxDecoration(
-              color: AppColors.surfaceVariant,
-              shape: BoxShape.circle,
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceVariant,
+                shape: BoxShape.circle,
+              ),
+              child: SvgPicture.asset(
+                'assets/icons/bear.svg',
+                width: 56,
+                height: 56,
+              ),
             ),
-            child: SvgPicture.asset(
-              'assets/icons/bear.svg',
-              width: 56,
-              height: 56,
+            const SizedBox(height: 20),
+            Text(
+              'How old is the reader?',
+              style: AppTextStyles.displayMedium.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
+              textAlign: TextAlign.center,
             ),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            'How old is the reader?',
-            style: AppTextStyles.displayMedium.copyWith(
-              fontWeight: FontWeight.w800,
+            const SizedBox(height: 8),
+            Text(
+              'We personalize the reading levels, vocabulary, and stories based on age.',
+              style: AppTextStyles.bodyMedium,
+              textAlign: TextAlign.center,
             ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'We personalize the reading levels, vocabulary, and stories based on age.',
-            style: AppTextStyles.bodyMedium,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 32),
-          Column(
-            children: ageRanges.map((range) {
-              final isSelected = vm.selectedAge == range.representativeAge;
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: _buildSelectionCard(
-                  title: range.label,
-                  subtitle: range.subtitle,
-                  badgeText: range.storyCount,
-                  leading: Text(
-                    range.emoji,
-                    style: const TextStyle(fontSize: 24),
+            const SizedBox(height: 32),
+            Column(
+              children: ageRanges.map((range) {
+                final isSelected = vm.selectedAge == range.representativeAge;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: _buildSelectionCard(
+                    title: range.label,
+                    subtitle: range.subtitle,
+                    badgeText: range.storyCount,
+                    leading: SvgPicture.asset(
+                      range.iconPath,
+                      width: 24,
+                      height: 24,
+                    ),
+                    isSelected: isSelected,
+                    onTap: () => vm.selectAge(range.representativeAge),
                   ),
-                  isSelected: isSelected,
-                  onTap: () => vm.selectAge(range.representativeAge),
-                ),
-              );
-            }).toList(),
-          ),
-        ],
+                );
+              }).toList(),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -209,89 +168,88 @@ class __OnboardingScreenContentState extends State<_OnboardingScreenContent> {
     final isNoneSelected =
         vm.selectedGender == 'unspecified' || vm.selectedGender == null;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(
-              color: AppColors.surfaceVariant,
-              shape: BoxShape.circle,
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            SvgPicture.asset(
+              'assets/icons/kids_1.svg',
+              width: MediaQuery.of(context).size.width * 0.5,
+              fit: BoxFit.contain,
             ),
-            child: const Text('✨', style: TextStyle(fontSize: 48)),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            'Tell us about them',
-            style: AppTextStyles.displayMedium.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Help us tailor recommended stories for your child.',
-            style: AppTextStyles.bodyMedium,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 32),
-          _buildSelectionCard(
-            title: 'Girl',
-            subtitle: 'Recommended stories for girls',
-            leading: Icon(
-              AppIcons.genderFemale,
-              size: 24,
-              color: isGirlSelected
-                  ? AppColors.primary
-                  : AppColors.textSecondary,
-            ),
-            isSelected: isGirlSelected,
-            onTap: () => vm.selectGender('girl'),
-          ),
-          const SizedBox(height: 16),
-          _buildSelectionCard(
-            title: 'Boy',
-            subtitle: 'Recommended stories for boys',
-            leading: Icon(
-              AppIcons.genderMale,
-              size: 24,
-              color: isBoySelected
-                  ? AppColors.primary
-                  : AppColors.textSecondary,
-            ),
-            isSelected: isBoySelected,
-            onTap: () => vm.selectGender('boy'),
-          ),
-          const SizedBox(height: 16),
-          _buildSelectionCard(
-            title: "I don't want to specify",
-            subtitle: 'Show stories for everyone',
-            leading: Icon(
-              AppIcons.genderNeuter,
-              size: 24,
-              color: isNoneSelected
-                  ? AppColors.primary
-                  : AppColors.textSecondary,
-            ),
-            isSelected: isNoneSelected,
-            onTap: () => vm.selectGender('unspecified'),
-          ),
-          const SizedBox(height: 32),
-          TextButton.icon(
-            icon: Icon(AppIcons.info, size: 20, color: AppColors.primary),
-            label: Text(
-              'Why do we ask for this information?',
-              style: AppTextStyles.titleMedium.copyWith(
-                color: AppColors.primary,
-                fontWeight: FontWeight.w700,
+            const SizedBox(height: 20),
+            Text(
+              'Tell us about them',
+              style: AppTextStyles.displayMedium.copyWith(
+                fontWeight: FontWeight.w800,
               ),
+              textAlign: TextAlign.center,
             ),
-            onPressed: () => _showWhyWeAskDialog(context),
-          ),
-        ],
+            const SizedBox(height: 8),
+            Text(
+              'Help us tailor recommended stories for your child.',
+              style: AppTextStyles.bodyMedium,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+            _buildSelectionCard(
+              title: 'Girl',
+              subtitle: 'Recommended stories for girls',
+              leading: Icon(
+                AppIcons.genderFemale,
+                size: 24,
+                color: isGirlSelected
+                    ? AppColors.primary
+                    : AppColors.textSecondary,
+              ),
+              isSelected: isGirlSelected,
+              onTap: () => vm.selectGender('girl'),
+            ),
+            const SizedBox(height: 16),
+            _buildSelectionCard(
+              title: 'Boy',
+              subtitle: 'Recommended stories for boys',
+              leading: Icon(
+                AppIcons.genderMale,
+                size: 24,
+                color: isBoySelected
+                    ? AppColors.primary
+                    : AppColors.textSecondary,
+              ),
+              isSelected: isBoySelected,
+              onTap: () => vm.selectGender('boy'),
+            ),
+            const SizedBox(height: 16),
+            _buildSelectionCard(
+              title: "I don't want to specify",
+              subtitle: 'Show stories for everyone',
+              leading: Icon(
+                AppIcons.genderNeuter,
+                size: 24,
+                color: isNoneSelected
+                    ? AppColors.primary
+                    : AppColors.textSecondary,
+              ),
+              isSelected: isNoneSelected,
+              onTap: () => vm.selectGender('unspecified'),
+            ),
+            const SizedBox(height: 32),
+            TextButton.icon(
+              icon: Icon(AppIcons.info, size: 20, color: AppColors.primary),
+              label: Text(
+                'Why do we ask for this information?',
+                style: AppTextStyles.titleMedium.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              onPressed: () => _showWhyWeAskDialog(context),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -304,13 +262,17 @@ class __OnboardingScreenContentState extends State<_OnboardingScreenContent> {
     required bool isSelected,
     required VoidCallback onTap,
   }) {
+    final isDark = AppColors.current == AppColors.darkScheme;
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       decoration: BoxDecoration(
-        color: isSelected ? AppColors.surfaceVariant : Colors.white,
+        color: isSelected ? AppColors.surfaceVariant : AppColors.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isSelected ? AppColors.primary : Colors.grey.shade200,
+          color: isSelected
+              ? AppColors.primary
+              : (isDark ? Colors.white.withValues(alpha: 0.12) : Colors.grey.shade200),
           width: 2,
         ),
         boxShadow: [
@@ -405,7 +367,9 @@ class __OnboardingScreenContentState extends State<_OnboardingScreenContent> {
                   isSelected
                       ? AppIcons.checkCircleFill
                       : AppIcons.checkCircleRegular,
-                  color: isSelected ? AppColors.primary : Colors.grey.shade400,
+                  color: isSelected
+                      ? AppColors.primary
+                      : (isDark ? Colors.white.withValues(alpha: 0.25) : Colors.grey.shade400),
                   size: 26,
                 ),
               ],
@@ -425,9 +389,9 @@ class __OnboardingScreenContentState extends State<_OnboardingScreenContent> {
         return Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(28),
               topRight: Radius.circular(28),
             ),
@@ -436,21 +400,12 @@ class __OnboardingScreenContentState extends State<_OnboardingScreenContent> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Why We Ask',
-                    style: AppTextStyles.displayMedium.copyWith(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  IconButton(
-                    icon: Icon(AppIcons.close, size: 22),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
+              Text(
+                'Why We Ask',
+                style: AppTextStyles.displayMedium.copyWith(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
               const SizedBox(height: 16),
               Text(
@@ -491,14 +446,7 @@ class __OnboardingScreenContentState extends State<_OnboardingScreenContent> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
       decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, -4),
-          ),
-        ],
+        color: AppColors.background,
       ),
       child: Row(
         children: [

@@ -34,7 +34,7 @@ class LanguageSelector extends StatelessWidget {
               curve: Curves.easeOut,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: isSelected ? AppColors.primary : Colors.white,
+                color: isSelected ? AppColors.primary : AppColors.surface,
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: isSelected
                     ? [
@@ -46,7 +46,10 @@ class LanguageSelector extends StatelessWidget {
                       ]
                     : [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.06),
+                          color: Colors.black.withValues(
+                              alpha: AppColors.current == AppColors.darkScheme
+                                  ? 0.2
+                                  : 0.06),
                           blurRadius: 6,
                           offset: const Offset(0, 2),
                         ),

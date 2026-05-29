@@ -5,51 +5,59 @@ import 'app_colors.dart';
 class AppTheme {
   AppTheme._();
 
-  static ThemeData get lightTheme {
+  static ThemeData get lightTheme => _buildTheme(Brightness.light, AppColors.lightScheme);
+  static ThemeData get darkTheme => _buildTheme(Brightness.dark, AppColors.darkScheme);
+
+  static ThemeData _buildTheme(Brightness brightness, AppColorScheme scheme) {
+    final isDark = brightness == Brightness.dark;
+
     return ThemeData(
       useMaterial3: true,
+      brightness: brightness,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: AppColors.primary,
-        brightness: Brightness.light,
-        primary: AppColors.primary,
-        secondary: AppColors.accent,
-        surface: AppColors.surface,
-        error: AppColors.error,
-        onPrimary: Colors.white,
+        seedColor: scheme.primary,
+        brightness: brightness,
+        primary: scheme.primary,
+        secondary: scheme.accent,
+        surface: scheme.surface,
+        error: scheme.error,
+        onPrimary: isDark ? scheme.primaryDark : Colors.white,
         onSecondary: Colors.white,
-        onSurface: AppColors.textPrimary,
+        onSurface: scheme.textPrimary,
         onError: Colors.white,
       ),
-      scaffoldBackgroundColor: AppColors.background,
-      textTheme: GoogleFonts.nunitoTextTheme(),
+      scaffoldBackgroundColor: scheme.background,
+      textTheme: GoogleFonts.quicksandTextTheme(
+        ThemeData(brightness: brightness).textTheme,
+      ),
       appBarTheme: AppBarTheme(
-        backgroundColor: AppColors.background,
+        backgroundColor: scheme.background,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        titleTextStyle: GoogleFonts.poppins(
+        titleTextStyle: GoogleFonts.plusJakartaSans(
           fontSize: 20,
           fontWeight: FontWeight.w700,
-          color: AppColors.textPrimary,
+          color: scheme.textPrimary,
         ),
-        iconTheme: const IconThemeData(color: AppColors.textPrimary),
+        iconTheme: IconThemeData(color: scheme.textPrimary),
         surfaceTintColor: Colors.transparent,
       ),
       cardTheme: CardThemeData(
-        color: AppColors.surface,
+        color: scheme.surface,
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         clipBehavior: Clip.antiAlias,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
+          backgroundColor: scheme.primary,
           foregroundColor: Colors.white,
           minimumSize: const Size(double.infinity, 54),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          textStyle: GoogleFonts.poppins(
+          textStyle: GoogleFonts.plusJakartaSans(
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
@@ -58,23 +66,23 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.primary,
+          foregroundColor: scheme.primary,
           minimumSize: const Size(double.infinity, 54),
-          side: const BorderSide(color: AppColors.primary, width: 1.5),
+          side: BorderSide(color: scheme.primary, width: 1.5),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          textStyle: GoogleFonts.poppins(
+          textStyle: GoogleFonts.plusJakartaSans(
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
         ),
       ),
       chipTheme: ChipThemeData(
-        backgroundColor: AppColors.surfaceVariant,
-        selectedColor: AppColors.primary,
-        disabledColor: AppColors.surfaceVariant,
-        labelStyle: GoogleFonts.nunito(
+        backgroundColor: scheme.surfaceVariant,
+        selectedColor: scheme.primary,
+        disabledColor: scheme.surfaceVariant,
+        labelStyle: GoogleFonts.quicksand(
           fontSize: 13,
           fontWeight: FontWeight.w600,
         ),
@@ -82,18 +90,18 @@ class AppTheme {
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
         side: BorderSide.none,
       ),
-      progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: AppColors.primary,
+      progressIndicatorTheme: ProgressIndicatorThemeData(
+        color: scheme.primary,
       ),
       sliderTheme: SliderThemeData(
-        activeTrackColor: AppColors.primaryLight,
-        thumbColor: AppColors.primary,
-        inactiveTrackColor: AppColors.surfaceVariant,
+        activeTrackColor: scheme.primaryLight,
+        thumbColor: scheme.primary,
+        inactiveTrackColor: scheme.surfaceVariant,
         trackHeight: 3,
         thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7),
       ),
-      dividerTheme: const DividerThemeData(
-        color: Color(0xFFEEEEF5),
+      dividerTheme: DividerThemeData(
+        color: isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFEEEEF5),
         thickness: 1,
         space: 0,
       ),
