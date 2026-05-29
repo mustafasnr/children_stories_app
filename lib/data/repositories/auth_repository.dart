@@ -7,6 +7,7 @@ class AuthRepository {
   bool get isLoggedIn => AuthService.isLoggedIn;
   Stream<AuthState> get authStateStream => AuthService.authStateStream;
 
+  Future<void> signInAnonymously() => AuthService.signInAnonymously();
   Future<void> signInWithGoogle() => AuthService.signInWithGoogle();
   Future<void> signInWithApple() => AuthService.signInWithApple();
   Future<void> signOut() => AuthService.signOut();

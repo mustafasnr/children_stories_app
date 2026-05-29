@@ -1,6 +1,7 @@
 import 'package:children_stories/app/theme/app_colors.dart';
 import 'package:children_stories/app/theme/app_text_styles.dart';
 import 'package:children_stories/viewmodels/home_viewmodel.dart';
+import 'package:children_stories/viewmodels/auth_viewmodel.dart';
 import 'package:children_stories/viewmodels/subscription_viewmodel.dart';
 import 'package:children_stories/views/home/widgets/category_chip_row.dart';
 import 'package:children_stories/views/home/widgets/featured_book_card.dart';
@@ -24,7 +25,8 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<HomeViewModel>().initialize();
+      final childAge = context.read<AuthViewModel>().profile?.childAge;
+      context.read<HomeViewModel>().initialize(childAge: childAge);
       context.read<SubscriptionViewModel>().checkSubscriptionStatus();
     });
   }

@@ -13,6 +13,7 @@ class HomeViewModel extends ChangeNotifier {
   List<Book> _featuredBooks = [];
   int _selectedLanguageIndex = 0;
   int? _selectedCategoryId;
+  int? _childAge;
   bool _isLoading = false;
   String? _error;
 
@@ -27,7 +28,8 @@ class HomeViewModel extends ChangeNotifier {
   Language? get selectedLanguage =>
       _languages.isNotEmpty ? _languages[_selectedLanguageIndex] : null;
 
-  Future<void> initialize() async {
+  Future<void> initialize({int? childAge}) async {
+    _childAge = childAge;
     if (_languages.isNotEmpty) return;
     _isLoading = true;
     notifyListeners();
@@ -45,7 +47,7 @@ class HomeViewModel extends ChangeNotifier {
   Future<void> refresh() async {
     _error = null;
     if (_languages.isEmpty) {
-      await initialize();
+      await initialize(childAge: _childAge);
       return;
     }
     await _refreshAll();
@@ -71,6 +73,7 @@ class HomeViewModel extends ChangeNotifier {
       _books = await _repository.getBooksByLanguage(
         lang.code,
         categoryId: categoryId,
+        childAge: _childAge,
       );
       notifyListeners();
     }
@@ -84,8 +87,9 @@ class HomeViewModel extends ChangeNotifier {
       _repository.getBooksByLanguage(
         lang.code,
         categoryId: _selectedCategoryId,
+        childAge: _childAge,
       ),
-      _repository.getFeaturedBooks(lang.code),
+      _repository.getFeaturedBooks(lang.code, childAge: _childAge),
     ]);
     _categories = results[0] as List<Category>;
     _books = results[1] as List<Book>;

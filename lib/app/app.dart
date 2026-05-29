@@ -1,4 +1,5 @@
 import 'package:children_stories/app/routes.dart';
+import 'package:children_stories/app/theme/app_colors.dart';
 import 'package:children_stories/app/theme/app_theme.dart';
 import 'package:children_stories/viewmodels/auth_viewmodel.dart';
 import 'package:children_stories/viewmodels/home_viewmodel.dart';
@@ -42,6 +43,28 @@ class _AppContentState extends State<_AppContent> {
 
   @override
   Widget build(BuildContext context) {
+    final authVM = context.watch<AuthViewModel>();
+
+    if (!authVM.isInitialized) {
+      return MaterialApp(
+        title: 'Story Time',
+        theme: AppTheme.lightTheme,
+        debugShowCheckedModeBanner: false,
+        home: Scaffold(
+          body: Container(
+            decoration: const BoxDecoration(
+              gradient: AppColors.splashGradient,
+            ),
+            child: const Center(
+              child: CircularProgressIndicator(
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return MaterialApp.router(
       title: 'Story Time',
       theme: AppTheme.lightTheme,

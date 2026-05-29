@@ -4,6 +4,8 @@ class UserProfile {
   final String? avatarUrl;
   final bool isPremium;
   final String? adaptyCustomerUserId;
+  final int? childAge;
+  final String? childGender;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -13,6 +15,8 @@ class UserProfile {
     this.avatarUrl,
     this.isPremium = false,
     this.adaptyCustomerUserId,
+    this.childAge,
+    this.childGender,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -23,6 +27,8 @@ class UserProfile {
         avatarUrl: json['avatar_url'] as String?,
         isPremium: json['is_premium'] as bool? ?? false,
         adaptyCustomerUserId: json['adapty_customer_user_id'] as String?,
+        childAge: json['child_age'] as int?,
+        childGender: json['child_gender'] as String?,
         createdAt: DateTime.parse(json['created_at'] as String),
         updatedAt: DateTime.parse(json['updated_at'] as String),
       );
@@ -38,13 +44,21 @@ class UserProfile {
     return '?';
   }
 
-  UserProfile copyWith({bool? isPremium, String? displayName, String? avatarUrl}) {
+  UserProfile copyWith({
+    bool? isPremium,
+    String? displayName,
+    String? avatarUrl,
+    int? childAge,
+    String? childGender,
+  }) {
     return UserProfile(
       id: id,
       displayName: displayName ?? this.displayName,
       avatarUrl: avatarUrl ?? this.avatarUrl,
       isPremium: isPremium ?? this.isPremium,
       adaptyCustomerUserId: adaptyCustomerUserId,
+      childAge: childAge ?? this.childAge,
+      childGender: childGender ?? this.childGender,
       createdAt: createdAt,
       updatedAt: DateTime.now(),
     );

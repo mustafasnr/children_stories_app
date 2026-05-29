@@ -29,6 +29,21 @@ class ProfileRepository {
         .eq('id', userId);
   }
 
+  Future<void> updateChildInfo(
+    String userId, {
+    int? age,
+    String? gender,
+  }) async {
+    await _client
+        .from(SupabaseConstants.profilesTable)
+        .update({
+          'child_age': age,
+          'child_gender': gender,
+          'updated_at': DateTime.now().toIso8601String(),
+        })
+        .eq('id', userId);
+  }
+
   Future<void> updatePremiumStatus(
     String userId, {
     required bool isPremium,

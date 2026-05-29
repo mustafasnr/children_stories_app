@@ -35,6 +35,7 @@ class BookRepository {
   Future<List<Book>> getBooksByLanguage(
     String languageCode, {
     int? categoryId,
+    int? childAge,
   }) async {
     var query = _client
         .from(SupabaseConstants.booksTable)
@@ -43,16 +44,23 @@ class BookRepository {
     if (categoryId != null) {
       query = query.eq('category_id', categoryId);
     }
+    if (childAge != null) {
+      query = query.lte('age_min', childAge).gte('age_max', childAge);
+    }
     final data = await query.order('created_at', ascending: false);
     return (data as List).map((e) => Book.fromJson(e)).toList();
   }
 
-  Future<List<Book>> getFeaturedBooks(String languageCode) async {
-    final data = await _client
+  Future<List<Book>> getFeaturedBooks(String languageCode, {int? childAge}) async {
+    var query = _client
         .from(SupabaseConstants.booksTable)
         .select('*, book_translations!inner(title, description)')
         .eq('book_translations.language_code', languageCode)
         .eq('is_featured', true);
+    if (childAge != null) {
+      query = query.lte('age_min', childAge).gte('age_max', childAge);
+    }
+    final data = await query;
     return (data as List).map((e) => Book.fromJson(e)).toList();
   }
 

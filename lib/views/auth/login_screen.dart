@@ -239,6 +239,23 @@ class LoginScreen extends StatelessWidget {
                           : () => authVM.signInWithApple(),
                     ),
                   ],
+                  const SizedBox(height: 16),
+                  TextButton(
+                    onPressed: authVM.isLoading
+                        ? null
+                        : () => authVM.continueWithoutSignIn(),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.white.withValues(alpha: 0.85),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                    ),
+                    child: Text(
+                      'Continue without signing in',
+                      style: AppTextStyles.titleMedium.copyWith(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),

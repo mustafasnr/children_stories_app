@@ -28,6 +28,12 @@ class AuthService {
   static Stream<AuthState> get authStateStream =>
       _client.auth.onAuthStateChange;
 
+  static Future<void> signInAnonymously() async {
+    await _client.auth.signInAnonymously();
+    final uid = _client.auth.currentUser?.id;
+    if (uid != null) await AdaptyService.identify(uid);
+  }
+
   static Future<void> signInWithGoogle() async {
     await _ensureGoogleSignInInitialized();
     final googleUser = await _googleSignIn.authenticate();

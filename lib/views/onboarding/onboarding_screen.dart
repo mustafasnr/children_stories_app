@@ -1,0 +1,582 @@
+import 'package:children_stories/app/theme/app_colors.dart';
+import 'package:children_stories/app/theme/app_text_styles.dart';
+import 'package:children_stories/core/constants/app_icons.dart';
+import 'package:children_stories/viewmodels/auth_viewmodel.dart';
+import 'package:children_stories/viewmodels/onboarding_viewmodel.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+
+class AgeRange {
+  final String label;
+  final String subtitle;
+  final String iconPath;
+  final int representativeAge;
+  final String storyCount;
+
+  const AgeRange({
+    required this.label,
+    required this.subtitle,
+    required this.iconPath,
+    required this.representativeAge,
+    required this.storyCount,
+  });
+}
+
+const List<AgeRange> ageRanges = [
+  AgeRange(
+    label: '2 - 5 Years Old',
+    subtitle: 'Picture books, lullabies & simple tales',
+    iconPath: 'assets/icons/magic.svg',
+    representativeAge: 3,
+    storyCount: '150+ Stories',
+  ),
+  AgeRange(
+    label: '6 - 9 Years Old',
+    subtitle: 'Adventures, early readers & fairy tales',
+    iconPath: 'assets/icons/rocket.svg',
+    representativeAge: 7,
+    storyCount: '350+ Stories',
+  ),
+  AgeRange(
+    label: '10 - 12 Years Old',
+    subtitle: 'Chapter books, fantasy & mysteries',
+    iconPath: 'assets/icons/books.svg',
+    representativeAge: 11,
+    storyCount: '200+ Stories',
+  ),
+];
+
+class OnboardingScreen extends StatelessWidget {
+  const OnboardingScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) => OnboardingViewModel(),
+      child: const _OnboardingScreenContent(),
+    );
+  }
+}
+
+class _OnboardingScreenContent extends StatefulWidget {
+  const _OnboardingScreenContent();
+
+  @override
+  State<_OnboardingScreenContent> createState() =>
+      __OnboardingScreenContentState();
+}
+
+class __OnboardingScreenContentState extends State<_OnboardingScreenContent> {
+  final PageController _pageController = PageController();
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final vm = context.watch<OnboardingViewModel>();
+    final authVM = context.read<AuthViewModel>();
+
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Column(
+          children: [
+            const SizedBox(height: 36),
+            _buildProgressBar(vm),
+            const SizedBox(height: 32),
+            Expanded(
+              child: PageView(
+                controller: _pageController,
+                physics: const NeverScrollableScrollPhysics(),
+                children: [_buildAgeStep(vm), _buildGenderStep(vm, context)],
+              ),
+            ),
+            _buildBottomBar(vm, authVM, context),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProgressBar(OnboardingViewModel vm) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    return Center(
+      child: SizedBox(
+        width: screenWidth * 0.5,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            children: List.generate(vm.totalSteps, (index) {
+              final isActive = index <= vm.currentStep;
+              return Expanded(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  margin: EdgeInsets.only(
+                    right: index < vm.totalSteps - 1 ? 8 : 0,
+                  ),
+                  height: 6,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(3),
+                    color: isActive
+                        ? AppColors.primary
+                        : AppColors.surfaceVariant,
+                    boxShadow: isActive
+                        ? [
+                            BoxShadow(
+                              color: AppColors.primary.withValues(alpha: 0.2),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ]
+                        : null,
+                  ),
+                ),
+              );
+            }),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAgeStep(OnboardingViewModel vm) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: const BoxDecoration(
+              color: AppColors.surfaceVariant,
+              shape: BoxShape.circle,
+            ),
+            child: SvgPicture.asset(
+              'assets/icons/bear.svg',
+              width: 56,
+              height: 56,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'How old is the reader?',
+            style: AppTextStyles.displayMedium.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'We personalize the reading levels, vocabulary, and stories based on age.',
+            style: AppTextStyles.bodyMedium,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 32),
+          Column(
+            children: ageRanges.map((range) {
+              final isSelected = vm.selectedAge == range.representativeAge;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: _buildSelectionCard(
+                  title: range.label,
+                  subtitle: range.subtitle,
+                  badgeText: range.storyCount,
+                  leading: Text(
+                    range.emoji,
+                    style: const TextStyle(fontSize: 24),
+                  ),
+                  isSelected: isSelected,
+                  onTap: () => vm.selectAge(range.representativeAge),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGenderStep(OnboardingViewModel vm, BuildContext context) {
+    final isGirlSelected = vm.selectedGender == 'girl';
+    final isBoySelected = vm.selectedGender == 'boy';
+    final isNoneSelected =
+        vm.selectedGender == 'unspecified' || vm.selectedGender == null;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: const BoxDecoration(
+              color: AppColors.surfaceVariant,
+              shape: BoxShape.circle,
+            ),
+            child: const Text('✨', style: TextStyle(fontSize: 48)),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'Tell us about them',
+            style: AppTextStyles.displayMedium.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Help us tailor recommended stories for your child.',
+            style: AppTextStyles.bodyMedium,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 32),
+          _buildSelectionCard(
+            title: 'Girl',
+            subtitle: 'Recommended stories for girls',
+            leading: Icon(
+              AppIcons.genderFemale,
+              size: 24,
+              color: isGirlSelected
+                  ? AppColors.primary
+                  : AppColors.textSecondary,
+            ),
+            isSelected: isGirlSelected,
+            onTap: () => vm.selectGender('girl'),
+          ),
+          const SizedBox(height: 16),
+          _buildSelectionCard(
+            title: 'Boy',
+            subtitle: 'Recommended stories for boys',
+            leading: Icon(
+              AppIcons.genderMale,
+              size: 24,
+              color: isBoySelected
+                  ? AppColors.primary
+                  : AppColors.textSecondary,
+            ),
+            isSelected: isBoySelected,
+            onTap: () => vm.selectGender('boy'),
+          ),
+          const SizedBox(height: 16),
+          _buildSelectionCard(
+            title: "I don't want to specify",
+            subtitle: 'Show stories for everyone',
+            leading: Icon(
+              AppIcons.genderNeuter,
+              size: 24,
+              color: isNoneSelected
+                  ? AppColors.primary
+                  : AppColors.textSecondary,
+            ),
+            isSelected: isNoneSelected,
+            onTap: () => vm.selectGender('unspecified'),
+          ),
+          const SizedBox(height: 32),
+          TextButton.icon(
+            icon: Icon(AppIcons.info, size: 20, color: AppColors.primary),
+            label: Text(
+              'Why do we ask for this information?',
+              style: AppTextStyles.titleMedium.copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            onPressed: () => _showWhyWeAskDialog(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSelectionCard({
+    required String title,
+    required String subtitle,
+    String? badgeText,
+    Widget? leading,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      decoration: BoxDecoration(
+        color: isSelected ? AppColors.surfaceVariant : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isSelected ? AppColors.primary : Colors.grey.shade200,
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isSelected
+                ? AppColors.primary.withValues(alpha: 0.05)
+                : Colors.black.withValues(alpha: 0.02),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(18),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(18),
+          splashColor: AppColors.primary.withValues(alpha: 0.1),
+          highlightColor: AppColors.primary.withValues(alpha: 0.05),
+          child: Padding(
+            padding: const EdgeInsets.all(18),
+            child: Row(
+              children: [
+                if (leading != null) ...[
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: isSelected ? Colors.white : AppColors.background,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: leading,
+                  ),
+                  const SizedBox(width: 16),
+                ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            title,
+                            style: AppTextStyles.headlineSmall.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: isSelected
+                                  ? AppColors.primary
+                                  : AppColors.textPrimary,
+                            ),
+                          ),
+                          if (badgeText != null) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? AppColors.primary.withValues(alpha: 0.15)
+                                    : AppColors.surfaceVariant,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                badgeText,
+                                style: AppTextStyles.labelSmall.copyWith(
+                                  color: isSelected
+                                      ? AppColors.primary
+                                      : AppColors.textSecondary,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: isSelected
+                              ? AppColors.primary.withValues(alpha: 0.7)
+                              : AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Icon(
+                  isSelected
+                      ? AppIcons.checkCircleFill
+                      : AppIcons.checkCircleRegular,
+                  color: isSelected ? AppColors.primary : Colors.grey.shade400,
+                  size: 26,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showWhyWeAskDialog(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      constraints: const BoxConstraints(maxWidth: double.infinity),
+      builder: (context) {
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(28),
+              topRight: Radius.circular(28),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Why We Ask',
+                    style: AppTextStyles.displayMedium.copyWith(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(AppIcons.close, size: 22),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Every child is unique! By knowing their age and preferences, we can recommend stories that match their vocabulary level, interests, and developmental stage. Your data is kept private and used only to personalize their in-app experience.',
+                style: AppTextStyles.bodyMedium.copyWith(
+                  height: 1.6,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 28),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                child: Text('Got It!', style: AppTextStyles.buttonLarge),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildBottomBar(
+    OnboardingViewModel vm,
+    AuthViewModel authVM,
+    BuildContext context,
+  ) {
+    final isAgeStep = vm.currentStep == 0;
+    final isNextDisabled = isAgeStep && vm.selectedAge == null;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          if (!isAgeStep)
+            TextButton.icon(
+              icon: Icon(
+                AppIcons.arrowLeft,
+                size: 18,
+                color: AppColors.textSecondary,
+              ),
+              label: Text(
+                'Back',
+                style: AppTextStyles.titleLarge.copyWith(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              onPressed: vm.isLoading
+                  ? null
+                  : () {
+                      vm.prevStep();
+                      _pageController.previousPage(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
+                    },
+            ),
+          const Spacer(),
+          ElevatedButton(
+            onPressed: isNextDisabled || vm.isLoading
+                ? null
+                : () async {
+                    if (isAgeStep) {
+                      vm.nextStep();
+                      _pageController.nextPage(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
+                    } else {
+                      final success = await vm.completeOnboarding(authVM);
+                      if (success && context.mounted) {
+                        context.go('/login');
+                      }
+                    }
+                  },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              minimumSize: const Size(140, 54),
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              elevation: 0,
+            ),
+            child: vm.isLoading
+                ? const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      color: Colors.white,
+                    ),
+                  )
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        isAgeStep ? 'Continue' : 'Complete',
+                        style: AppTextStyles.buttonLarge,
+                      ),
+                      const SizedBox(width: 8),
+                      Icon(AppIcons.arrowRight, size: 16),
+                    ],
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
