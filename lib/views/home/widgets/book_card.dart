@@ -12,17 +12,20 @@ class BookCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+
     return GestureDetector(
       onTap: () => context.push('/book/${book.id}'),
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(
-                  alpha: AppColors.current == AppColors.darkScheme ? 0.2 : 0.06),
+              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.06),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -36,7 +39,7 @@ class BookCard extends StatelessWidget {
               _buildCover(),
               const SizedBox(width: 14),
               // Info
-              Expanded(child: _buildInfo()),
+              Expanded(child: _buildInfo(context)),
               const SizedBox(width: 12),
             ],
           ),
@@ -96,7 +99,7 @@ class BookCard extends StatelessWidget {
     ),
   );
 
-  Widget _buildInfo() {
+  Widget _buildInfo(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 14),
       child: Column(
@@ -121,9 +124,10 @@ class BookCard extends StatelessWidget {
             spacing: 8,
             runSpacing: 4,
             children: [
-              _tag('👶 ${book.ageRange}'),
-              _tag('⏱ ${book.readTime}'),
-              if (book.pageCount > 0) _tag('📄 ${book.pageCount} pages'),
+              _tag(context, '👶 ${book.ageRange}'),
+              _tag(context, '⏱ ${book.readTime}'),
+              if (book.pageCount > 0)
+                _tag(context, '📄 ${book.pageCount} pages'),
             ],
           ),
         ],
@@ -131,10 +135,10 @@ class BookCard extends StatelessWidget {
     );
   }
 
-  Widget _tag(String text) => Container(
+  Widget _tag(BuildContext context, String text) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
     decoration: BoxDecoration(
-      color: AppColors.surfaceVariant,
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
       borderRadius: BorderRadius.circular(8),
     ),
     child: Text(text, style: AppTextStyles.labelSmall),

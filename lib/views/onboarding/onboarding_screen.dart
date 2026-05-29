@@ -83,7 +83,6 @@ class __OnboardingScreenContentState extends State<_OnboardingScreenContent> {
     final authVM = context.read<AuthViewModel>();
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -384,10 +383,8 @@ class __OnboardingScreenContentState extends State<_OnboardingScreenContent> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      constraints: const BoxConstraints(maxWidth: double.infinity),
       builder: (context) {
         return Container(
-          width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
           decoration: BoxDecoration(
             color: AppColors.surface,
@@ -446,7 +443,7 @@ class __OnboardingScreenContentState extends State<_OnboardingScreenContent> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
       decoration: BoxDecoration(
-        color: AppColors.background,
+        color: Theme.of(context).scaffoldBackgroundColor,
       ),
       child: Row(
         children: [

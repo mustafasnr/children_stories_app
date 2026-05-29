@@ -60,14 +60,13 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
           }
           final book = vm.book!;
           return Scaffold(
-            backgroundColor: AppColors.background,
             body: CustomScrollView(
               slivers: [
                 // Hero app bar with cover
                 SliverAppBar(
                   expandedHeight: 320,
                   pinned: true,
-                  backgroundColor: AppColors.background,
+                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                   leading: GestureDetector(
                     onTap: () => context.pop(),
                     child: Container(

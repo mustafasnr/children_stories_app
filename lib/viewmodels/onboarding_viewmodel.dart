@@ -45,7 +45,7 @@ class OnboardingViewModel extends ChangeNotifier {
     notifyListeners();
     
     try {
-      await authVM.updateOnboardingData(
+      await authVM.completeLocalOnboarding(
         age: _selectedAge!,
         gender: _selectedGender,
       );

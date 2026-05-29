@@ -13,7 +13,7 @@ class BookRepository {
 
   Future<List<Language>> getLanguages() async {
     final data = await _client
-        .from(SupabaseConstants.languagesTable)
+        .from('languages_with_story_count')
         .select()
         .order('sort_order');
     return (data as List).map((e) => Language.fromJson(e)).toList();

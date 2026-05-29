@@ -4,6 +4,7 @@ import 'package:children_stories/core/services/audio_service.dart';
 import 'package:children_stories/viewmodels/home_viewmodel.dart';
 import 'package:children_stories/viewmodels/reader_viewmodel.dart';
 import 'package:children_stories/viewmodels/subscription_viewmodel.dart';
+import 'package:children_stories/viewmodels/theme_viewmodel.dart';
 import 'package:children_stories/views/reader/widgets/audio_player_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -37,9 +38,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
   void _onVMChange() {
     // Load audio once book is loaded and user has premium
-    if (!_audioInitialized &&
-        _vm.hasAudio &&
-        !_vm.isLoading) {
+    if (!_audioInitialized && _vm.hasAudio && !_vm.isLoading) {
       final subVM = context.read<SubscriptionViewModel>();
       if (subVM.isPremium) {
         _audioInitialized = true;
@@ -67,14 +66,18 @@ class _ReaderScreenState extends State<ReaderScreen> {
         builder: (context, vm, _) {
           if (vm.isLoading) {
             return const Scaffold(
-                body: Center(child: CircularProgressIndicator()));
+              body: Center(child: CircularProgressIndicator()),
+            );
           }
           if (vm.pages.isEmpty) {
             return Scaffold(
               appBar: AppBar(),
               body: Center(
-                  child: Text(vm.error ?? 'No pages found.',
-                      style: AppTextStyles.bodyMedium)),
+                child: Text(
+                  vm.error ?? 'No pages found.',
+                  style: AppTextStyles.bodyMedium,
+                ),
+              ),
             );
           }
 
@@ -82,52 +85,58 @@ class _ReaderScreenState extends State<ReaderScreen> {
           final showAudio = vm.hasAudio && subVM.isPremium;
 
           return Scaffold(
-            backgroundColor: AppColors.background,
             body: SafeArea(
-              child: Column(children: [
-                // Custom app bar
-                _buildTopBar(context, vm),
-                // Page content
-                Expanded(
-                  child: PageView.builder(
-                    controller: _pageController,
-                    itemCount: vm.pages.length,
-                    onPageChanged: vm.goToPage,
-                    itemBuilder: (_, index) {
-                      final page = vm.pages[index];
-                      return SingleChildScrollView(
-                        padding: const EdgeInsets.fromLTRB(28, 24, 28, 24),
-                        child: Column(
-                          children: [
-                            // Page number indicator
-                            Text('Page ${page.pageNumber}',
-                                style: AppTextStyles.labelSmall
-                                    .copyWith(color: AppColors.primary)),
-                            const SizedBox(height: 20),
-                            Text(
-                              page.textContent,
-                              style: AppTextStyles.readerText,
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
-                      );
-                    },
+              child: Column(
+                children: [
+                  // Custom app bar
+                  _buildTopBar(context, vm),
+                  // Page content
+                  Expanded(
+                    child: PageView.builder(
+                      controller: _pageController,
+                      itemCount: vm.pages.length,
+                      onPageChanged: vm.goToPage,
+                      itemBuilder: (_, index) {
+                        final page = vm.pages[index];
+                        return SingleChildScrollView(
+                          padding: const EdgeInsets.fromLTRB(28, 24, 28, 24),
+                          child: Column(
+                            children: [
+                              // Page number indicator
+                              Text(
+                                'Page ${page.pageNumber}',
+                                style: AppTextStyles.labelSmall.copyWith(
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              Text(
+                                page.textContent,
+                                style: AppTextStyles.readerText.copyWith(
+                                  fontSize: context.watch<ThemeViewModel>().storyTextSize,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
                   ),
-                ),
-                // Page dots
-                _buildPageDots(vm),
-                // Navigation arrows
-                _buildNavigation(vm),
-                // Audio player
-                if (showAudio) ...[
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-                    child: AudioPlayerBar(audioService: _audioService),
-                  ),
+                  // Page dots
+                  _buildPageDots(vm),
+                  // Navigation arrows
+                  _buildNavigation(vm),
+                  // Audio player
+                  if (showAudio) ...[
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                      child: AudioPlayerBar(audioService: _audioService),
+                    ),
+                  ],
+                  const SizedBox(height: 8),
                 ],
-                const SizedBox(height: 8),
-              ]),
+              ),
             ),
           );
         },
@@ -138,28 +147,30 @@ class _ReaderScreenState extends State<ReaderScreen> {
   Widget _buildTopBar(BuildContext context, ReaderViewModel vm) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(children: [
-        IconButton(
-          icon: const Icon(Icons.close_rounded),
-          onPressed: () => context.pop(),
-          style: IconButton.styleFrom(
-            backgroundColor: AppColors.surfaceVariant,
-            shape: const CircleBorder(),
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.close_rounded),
+            onPressed: () => context.pop(),
+            style: IconButton.styleFrom(
+              backgroundColor: AppColors.surfaceVariant,
+              shape: const CircleBorder(),
+            ),
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            vm.book?.title ?? '',
-            style: AppTextStyles.titleMedium,
-            overflow: TextOverflow.ellipsis,
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              vm.book?.title ?? '',
+              style: AppTextStyles.titleMedium,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
-        ),
-        Text(
-          '${vm.currentPageIndex + 1} / ${vm.totalPages}',
-          style: AppTextStyles.labelMedium,
-        ),
-      ]),
+          Text(
+            '${vm.currentPageIndex + 1} / ${vm.totalPages}',
+            style: AppTextStyles.labelMedium,
+          ),
+        ],
+      ),
     );
   }
 
@@ -178,7 +189,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
             decoration: BoxDecoration(
               color: isActive
                   ? AppColors.primary
-                  : AppColors.primary.withValues(alpha:0.2),
+                  : AppColors.primary.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(3),
             ),
           );
@@ -200,8 +211,9 @@ class _ReaderScreenState extends State<ReaderScreen> {
                 : () {
                     vm.previousPage();
                     _pageController.previousPage(
-                        duration: const Duration(milliseconds: 350),
-                        curve: Curves.easeInOut);
+                      duration: const Duration(milliseconds: 350),
+                      curve: Curves.easeInOut,
+                    );
                   },
           ),
           if (vm.isLastPage)
@@ -221,8 +233,9 @@ class _ReaderScreenState extends State<ReaderScreen> {
                 : () {
                     vm.nextPage();
                     _pageController.nextPage(
-                        duration: const Duration(milliseconds: 350),
-                        curve: Curves.easeInOut);
+                      duration: const Duration(milliseconds: 350),
+                      curve: Curves.easeInOut,
+                    );
                   },
           ),
         ],
@@ -230,8 +243,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
     );
   }
 
-  Widget _navButton(
-      {required IconData icon, required VoidCallback? onTap}) {
+  Widget _navButton({required IconData icon, required VoidCallback? onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -244,15 +256,18 @@ class _ReaderScreenState extends State<ReaderScreen> {
           boxShadow: onTap != null
               ? [
                   BoxShadow(
-                      color: AppColors.primary.withValues(alpha:0.3),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4))
+                    color: AppColors.primary.withValues(alpha: 0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
                 ]
               : [],
         ),
-        child: Icon(icon,
-            color: onTap != null ? Colors.white : AppColors.textHint,
-            size: 20),
+        child: Icon(
+          icon,
+          color: onTap != null ? Colors.white : AppColors.textHint,
+          size: 20,
+        ),
       ),
     );
   }

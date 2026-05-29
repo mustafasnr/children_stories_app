@@ -5,8 +5,10 @@ import 'app_colors.dart';
 class AppTheme {
   AppTheme._();
 
-  static ThemeData get lightTheme => _buildTheme(Brightness.light, AppColors.lightScheme);
-  static ThemeData get darkTheme => _buildTheme(Brightness.dark, AppColors.darkScheme);
+  static ThemeData get lightTheme =>
+      _buildTheme(Brightness.light, AppColors.lightScheme);
+  static ThemeData get darkTheme =>
+      _buildTheme(Brightness.dark, AppColors.darkScheme);
 
   static ThemeData _buildTheme(Brightness brightness, AppColorScheme scheme) {
     final isDark = brightness == Brightness.dark;
@@ -90,18 +92,21 @@ class AppTheme {
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
         side: BorderSide.none,
       ),
-      progressIndicatorTheme: ProgressIndicatorThemeData(
-        color: scheme.primary,
-      ),
+      progressIndicatorTheme: ProgressIndicatorThemeData(color: scheme.primary),
       sliderTheme: SliderThemeData(
-        activeTrackColor: scheme.primaryLight,
-        thumbColor: scheme.primary,
-        inactiveTrackColor: scheme.surfaceVariant,
+        activeTrackColor: isDark ? scheme.primary : scheme.primaryLight,
+        thumbColor: isDark ? scheme.primaryLight : scheme.primary,
+        inactiveTrackColor: isDark
+            ? Colors.white.withValues(alpha: 0.12)
+            : scheme.textHint.withValues(alpha: 0.18),
         trackHeight: 3,
         thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7),
+        overlayColor: scheme.primary.withValues(alpha: 0.10),
       ),
       dividerTheme: DividerThemeData(
-        color: isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFEEEEF5),
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.1)
+            : const Color(0xFFEEEEF5),
         thickness: 1,
         space: 0,
       ),

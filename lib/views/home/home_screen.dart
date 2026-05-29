@@ -1,12 +1,14 @@
-import 'package:children_stories/app/theme/app_colors.dart';
 import 'package:children_stories/app/theme/app_text_styles.dart';
+import 'package:children_stories/data/models/category_model.dart';
 import 'package:children_stories/viewmodels/home_viewmodel.dart';
 import 'package:children_stories/viewmodels/auth_viewmodel.dart';
 import 'package:children_stories/viewmodels/subscription_viewmodel.dart';
+import 'package:children_stories/l10n/app_localizations.dart';
+import 'package:children_stories/views/home/widgets/book_card.dart';
 import 'package:children_stories/views/home/widgets/category_chip_row.dart';
 import 'package:children_stories/views/home/widgets/featured_book_card.dart';
-import 'package:children_stories/views/home/widgets/language_selector.dart';
-import 'package:children_stories/views/home/widgets/book_card.dart';
+import 'package:children_stories/views/home/widgets/language_bottom_sheet.dart';
+import 'package:country_flags/country_flags.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -32,32 +34,69 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     return Scaffold(
-      backgroundColor: AppColors.background,
       body: Consumer<HomeViewModel>(
         builder: (context, vm, _) {
           return RefreshIndicator(
-            color: AppColors.primary,
+            color: Theme.of(context).colorScheme.primary,
             onRefresh: vm.refresh,
             child: CustomScrollView(
               slivers: [
-                _buildAppBar(context),
+                SliverAppBar(
+                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                  floating: true,
+                  snap: true,
+                  elevation: 0,
+                  toolbarHeight: 70,
+                  title: Text(
+                    'Story Time',
+                    style: AppTextStyles.displayMedium.copyWith(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  actions: [
+                    if (vm.selectedLanguage != null)
+                      TextButton.icon(
+                        onPressed: () {
+                          LanguageBottomSheet.show(
+                            context,
+                            languages: vm.languages,
+                            selectedIndex: vm.selectedLanguageIndex,
+                            onSelected: vm.selectLanguage,
+                          );
+                        },
+                        icon: CountryFlags.flag(
+                          vm.selectedLanguage!.countryCode,
+                          width: 24,
+                          height: 18,
+                          borderRadius: 4,
+                        ),
+                        label: Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      ),
+                    IconButton(
+                      icon: Icon(
+                        Icons.manage_accounts_rounded,
+                        color: Theme.of(context).colorScheme.onSurface,
+                        size: 26,
+                      ),
+                      onPressed: () => context.push('/profile'),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                ),
                 if (vm.isLoading) ...[
-                  SliverToBoxAdapter(child: _buildShimmer()),
+                  SliverToBoxAdapter(child: _buildShimmer(context)),
                 ] else if (vm.error != null) ...[
                   SliverFillRemaining(child: _buildError(vm)),
                 ] else ...[
-                  // Language tabs
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: LanguageSelector(
-                        languages: vm.languages,
-                        selectedIndex: vm.selectedLanguageIndex,
-                        onSelected: vm.selectLanguage,
-                      ),
-                    ),
-                  ),
                   // Featured
                   if (vm.featuredBooks.isNotEmpty)
                     SliverToBoxAdapter(
@@ -67,7 +106,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           Padding(
                             padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
                             child: Text(
-                              '✨ Featured',
+                              localizations.featured,
                               style: AppTextStyles.headlineSmall,
                             ),
                           ),
@@ -112,20 +151,21 @@ class _HomeScreenState extends State<HomeScreen> {
                       padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
                       child: Text(
                         vm.selectedCategoryId == null
-                            ? 'All Stories'
-                            : vm.categories
-                                  .firstWhere(
-                                    (c) => c.id == vm.selectedCategoryId,
-                                    orElse: () => vm.categories.first,
-                                  )
-                                  .name,
+                            ? localizations.all_stories
+                            : (() {
+                                final cat = vm.categories.firstWhere(
+                                  (c) => c.id == vm.selectedCategoryId,
+                                  orElse: () => vm.categories.first,
+                                );
+                                return _translateCategory(context, cat);
+                              })(),
                         style: AppTextStyles.headlineSmall,
                       ),
                     ),
                   ),
                   // Book list
                   if (vm.books.isEmpty)
-                    SliverToBoxAdapter(child: _buildEmpty())
+                    SliverToBoxAdapter(child: _buildEmpty(localizations))
                   else
                     SliverList(
                       delegate: SliverChildBuilderDelegate(
@@ -143,44 +183,22 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildAppBar(BuildContext context) {
-    return SliverAppBar(
-      backgroundColor: AppColors.background,
-      floating: true,
-      snap: true,
-      elevation: 0,
-      toolbarHeight: 70,
-      title: Text(
-        'Story Time',
-        style: AppTextStyles.displayMedium.copyWith(
-          color: AppColors.textPrimary,
-        ),
-      ),
-      actions: [
-        IconButton(
-          icon: Icon(
-            Icons.manage_accounts_rounded,
-            color: AppColors.textPrimary,
-            size: 26,
-          ),
-          onPressed: () => context.push('/profile'),
-        ),
-        const SizedBox(width: 12),
-      ],
-    );
-  }
+  Widget _buildShimmer(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final baseColor = isDark ? Colors.grey[800]! : Colors.grey[200]!;
+    final highlightColor = isDark ? Colors.grey[700]! : Colors.grey[50]!;
+    final cardColor = isDark ? Colors.grey[850]! : Colors.white;
 
-  Widget _buildShimmer() {
     return Shimmer.fromColors(
-      baseColor: Colors.grey[200]!,
-      highlightColor: Colors.grey[50]!,
+      baseColor: baseColor,
+      highlightColor: highlightColor,
       child: Column(
         children: [
           Container(
             margin: const EdgeInsets.fromLTRB(20, 16, 20, 16),
             height: 200,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: cardColor,
               borderRadius: BorderRadius.circular(24),
             ),
           ),
@@ -190,7 +208,7 @@ class _HomeScreenState extends State<HomeScreen> {
               margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
               height: 120,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cardColor,
                 borderRadius: BorderRadius.circular(20),
               ),
             ),
@@ -231,7 +249,25 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildEmpty() {
+  String _translateCategory(BuildContext context, Category cat) {
+    final localizations = AppLocalizations.of(context)!;
+    switch (cat.id) {
+      case 1:
+        return localizations.category_1;
+      case 2:
+        return localizations.category_2;
+      case 3:
+        return localizations.category_3;
+      case 4:
+        return localizations.category_4;
+      case 5:
+        return localizations.category_5;
+      default:
+        return cat.name;
+    }
+  }
+
+  Widget _buildEmpty(AppLocalizations localizations) {
     return Padding(
       padding: const EdgeInsets.all(40),
       child: Column(
@@ -240,13 +276,13 @@ class _HomeScreenState extends State<HomeScreen> {
           const Text('📭', style: TextStyle(fontSize: 48)),
           const SizedBox(height: 12),
           Text(
-            'No stories yet',
+            localizations.no_stories_yet,
             style: AppTextStyles.headlineSmall,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
           Text(
-            'Stories for this language are coming soon!',
+            localizations.stories_coming_soon,
             style: AppTextStyles.bodyMedium,
             textAlign: TextAlign.center,
           ),

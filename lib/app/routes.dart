@@ -1,3 +1,4 @@
+import 'package:children_stories/core/services/toast_service.dart';
 import 'package:children_stories/viewmodels/auth_viewmodel.dart';
 import 'package:children_stories/views/auth/login_screen.dart';
 import 'package:children_stories/views/book_detail/book_detail_screen.dart';
@@ -12,41 +13,41 @@ class AppRouter {
 
   static GoRouter createRouter(AuthViewModel authViewModel) {
     return GoRouter(
+      navigatorKey: ToastService.navigatorKey,
       initialLocation: '/home',
       refreshListenable: authViewModel,
       redirect: (context, state) {
-        final isLoggedIn = authViewModel.isLoggedIn;
         final isInitialized = authViewModel.isInitialized;
         if (!isInitialized) return null; // Wait for initial auth setup
 
         final hasCompletedOnboarding = authViewModel.hasCompletedOnboarding;
+        final isLoggedIn = authViewModel.isLoggedIn;
         final hasFinishedAuthSelection = authViewModel.hasFinishedAuthSelection;
 
         final location = state.matchedLocation;
         final isOnboarding = location == '/onboarding';
         final isLogin = location == '/login';
 
-        // 1. Safety fallback if not logged in (e.g. Supabase session issue)
-        if (!isLoggedIn) {
-          if (!isLogin && !isOnboarding) return '/login';
-          return null;
-        }
-
-        // 2. Redirect to onboarding if not yet completed
+        // 1. Onboarding must be completed first
         if (!hasCompletedOnboarding) {
           if (!isOnboarding) return '/onboarding';
           return null;
         }
 
-        // 3. Redirect to login page if they haven't explicitly chosen to proceed
+        // 2. User must be logged in (anonymous or permanent)
+        if (!isLoggedIn) {
+          if (!isLogin) return '/login';
+          return null;
+        }
+
+        // 3. Must choose to proceed if they are anonymous guest
         if (!hasFinishedAuthSelection) {
           if (!isLogin) return '/login';
           return null;
         }
 
-        // 4. Bypassing auth views once authenticated and finished onboarding
+        // 4. Bypass onboarding/login if fully set up
         if (isOnboarding || isLogin) {
-          if (authViewModel.isAnonymous) return null;
           return '/home';
         }
 

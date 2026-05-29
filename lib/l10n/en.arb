@@ -1,0 +1,17 @@
+{
+  "@@locale": "en",
+  "language_name": "English",
+  "app_language": "App Language",
+  "select_language": "Select Language",
+  "all_stories": "All Stories",
+  "featured": "✨ Featured",
+  "coming_soon": "Coming Soon",
+  "no_stories_yet": "No stories yet",
+  "stories_coming_soon": "Stories for this language are coming soon!",
+  
+  "category_1": "All Stories",
+  "category_2": "Fairy Tales",
+  "category_3": "Adventure",
+  "category_4": "Animals",
+  "category_5": "Fantasy"
+}

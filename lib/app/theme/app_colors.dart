@@ -50,8 +50,8 @@ class AppColors {
     premium: const Color(0xFFF59E0B),       // Amber Gold
     premiumLight: const Color(0xFFFCD34D),
     premiumDark: const Color(0xFFD97706),
-    background: const Color(0xFFFAF7F0),    // Vanilla Cream (cozy paper feel)
-    surface: const Color(0xFFFDF7FF),       // Whimsical surface tint
+    background: const Color(0xFFF8F9FD),    // Soft whimsical off-white
+    surface: const Color(0xFFFFFFFF),       // Pure white for cards/tiles
     surfaceVariant: const Color(0xFFE7DFF1),// Whimsical surface variant
     textPrimary: const Color(0xFF1D1A26),   // Deep Plum (soft dark)
     textSecondary: const Color(0xFF494553), // Medium Plum

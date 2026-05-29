@@ -4,6 +4,7 @@ class Language {
   final String name;
   final String flagEmoji;
   final int sortOrder;
+  final int storyCount;
 
   const Language({
     required this.id,
@@ -11,7 +12,31 @@ class Language {
     required this.name,
     required this.flagEmoji,
     this.sortOrder = 0,
+    this.storyCount = 0,
   });
+
+  String get countryCode {
+    switch (code.toLowerCase()) {
+      case 'en':
+        return 'gb';
+      case 'ja':
+        return 'jp';
+      case 'zh':
+        return 'cn';
+      case 'ar':
+        return 'sa';
+      case 'ko':
+        return 'kr';
+      case 'el':
+        return 'gr';
+      case 'he':
+        return 'il';
+      case 'hi':
+        return 'in';
+      default:
+        return code;
+    }
+  }
 
   factory Language.fromJson(Map<String, dynamic> json) => Language(
         id: json['id'] as int,
@@ -19,6 +44,7 @@ class Language {
         name: json['name'] as String,
         flagEmoji: json['flag_emoji'] as String,
         sortOrder: json['sort_order'] as int? ?? 0,
+        storyCount: json['story_count'] as int? ?? 0,
       );
 
   @override

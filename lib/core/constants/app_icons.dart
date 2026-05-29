@@ -19,4 +19,5 @@ class AppIcons {
   static IconData get genderMale => PhosphorIconsBold.genderMale;
   static IconData get genderNeuter => PhosphorIconsBold.user;
   static IconData get sparkle => PhosphorIconsBold.sparkle;
+  static IconData get textSize => PhosphorIconsBold.textT;
 }

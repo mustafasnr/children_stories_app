@@ -8,9 +8,12 @@ class HomeViewModel extends ChangeNotifier {
   final BookRepository _repository = BookRepository();
 
   List<Language> _languages = [];
-  List<Category> _categories = [];
-  List<Book> _books = [];
-  List<Book> _featuredBooks = [];
+  
+  // Caches keyed by language code
+  final Map<String, List<Category>> _cachedCategories = {};
+  final Map<String, List<Book>> _cachedBooks = {}; // Currently fetched books for selected language/category
+  final Map<String, List<Book>> _cachedFeaturedBooks = {};
+
   int _selectedLanguageIndex = 0;
   int? _selectedCategoryId;
   int? _childAge;
@@ -18,15 +21,32 @@ class HomeViewModel extends ChangeNotifier {
   String? _error;
 
   List<Language> get languages => _languages;
-  List<Category> get categories => _categories;
-  List<Book> get books => _books;
-  List<Book> get featuredBooks => _featuredBooks;
+  
+  Language? get selectedLanguage =>
+      _languages.isNotEmpty ? _languages[_selectedLanguageIndex] : null;
+
+  List<Category> get categories {
+    final lang = selectedLanguage;
+    if (lang == null) return [];
+    return _cachedCategories[lang.code] ?? [];
+  }
+
+  List<Book> get books {
+    final lang = selectedLanguage;
+    if (lang == null) return [];
+    return _cachedBooks[lang.code] ?? [];
+  }
+
+  List<Book> get featuredBooks {
+    final lang = selectedLanguage;
+    if (lang == null) return [];
+    return _cachedFeaturedBooks[lang.code] ?? [];
+  }
+
   int get selectedLanguageIndex => _selectedLanguageIndex;
   int? get selectedCategoryId => _selectedCategoryId;
   bool get isLoading => _isLoading;
   String? get error => _error;
-  Language? get selectedLanguage =>
-      _languages.isNotEmpty ? _languages[_selectedLanguageIndex] : null;
 
   Future<void> initialize({int? childAge}) async {
     _childAge = childAge;
@@ -50,18 +70,15 @@ class HomeViewModel extends ChangeNotifier {
       await initialize(childAge: _childAge);
       return;
     }
-    await _refreshAll();
+    await _refreshAll(forceRefresh: true);
   }
 
   Future<void> selectLanguage(int index) async {
-    if (index == _selectedLanguageIndex && _books.isNotEmpty) return;
+    if (index == _selectedLanguageIndex) return;
     _selectedLanguageIndex = index;
     _selectedCategoryId = null;
-    _books = [];
-    _featuredBooks = [];
-    _categories = [];
     notifyListeners();
-    await _refreshAll();
+    await _refreshAll(); // Will fetch if not cached, or update in background if cached
   }
 
   Future<void> selectCategory(int? categoryId) async {
@@ -70,7 +87,7 @@ class HomeViewModel extends ChangeNotifier {
     notifyListeners();
     final lang = selectedLanguage;
     if (lang != null) {
-      _books = await _repository.getBooksByLanguage(
+      _cachedBooks[lang.code] = await _repository.getBooksByLanguage(
         lang.code,
         categoryId: categoryId,
         childAge: _childAge,
@@ -79,21 +96,48 @@ class HomeViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> _refreshAll() async {
+  Future<void> _refreshAll({bool forceRefresh = false}) async {
     final lang = selectedLanguage;
     if (lang == null) return;
-    final results = await Future.wait([
-      _repository.getCategoriesByLanguage(lang.code),
-      _repository.getBooksByLanguage(
-        lang.code,
-        categoryId: _selectedCategoryId,
-        childAge: _childAge,
-      ),
-      _repository.getFeaturedBooks(lang.code, childAge: _childAge),
-    ]);
-    _categories = results[0] as List<Category>;
-    _books = results[1] as List<Book>;
-    _featuredBooks = results[2] as List<Book>;
-    notifyListeners();
+    
+    final code = lang.code;
+    
+    // If we have cached data and not forcing refresh, show it immediately 
+    // and we could optionally fetch in background.
+    bool hasData = _cachedCategories.containsKey(code) && 
+                   _cachedBooks.containsKey(code) && 
+                   _cachedFeaturedBooks.containsKey(code);
+                   
+    if (!hasData || forceRefresh) {
+      if (!hasData) {
+        _isLoading = true;
+        notifyListeners();
+      }
+      
+      try {
+        final results = await Future.wait([
+          _repository.getCategoriesByLanguage(code),
+          _repository.getBooksByLanguage(
+            code,
+            categoryId: _selectedCategoryId,
+            childAge: _childAge,
+          ),
+          _repository.getFeaturedBooks(code, childAge: _childAge),
+        ]);
+        
+        _cachedCategories[code] = results[0] as List<Category>;
+        _cachedBooks[code] = results[1] as List<Book>;
+        _cachedFeaturedBooks[code] = results[2] as List<Book>;
+        _error = null;
+      } catch (e) {
+        _error = 'Failed to load content. Pull to refresh.';
+        debugPrint('[HomeVM] refreshAll error: $e');
+      }
+
+      if (!hasData) {
+        _isLoading = false;
+      }
+      notifyListeners();
+    }
   }
 }

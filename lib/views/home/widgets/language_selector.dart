@@ -1,6 +1,7 @@
 import 'package:children_stories/app/theme/app_colors.dart';
 import 'package:children_stories/app/theme/app_text_styles.dart';
 import 'package:children_stories/data/models/language_model.dart';
+import 'package:country_flags/country_flags.dart';
 import 'package:flutter/material.dart';
 
 class LanguageSelector extends StatelessWidget {
@@ -58,7 +59,12 @@ class LanguageSelector extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(lang.flagEmoji, style: const TextStyle(fontSize: 16)),
+                  CountryFlags.flag(
+                    lang.countryCode,
+                    width: 20,
+                    height: 15,
+                    borderRadius: 3,
+                  ),
                   const SizedBox(width: 6),
                   Text(
                     lang.name,
