@@ -80,7 +80,7 @@ class BookRepository {
       String bookId, String languageCode) async {
     final data = await _client
         .from(SupabaseConstants.pagesTable)
-        .select('*, page_translations!inner(text_content)')
+        .select('*, page_translations!inner(text_content, audio_seek_seconds)')
         .eq('book_id', bookId)
         .eq('page_translations.language_code', languageCode)
         .order('page_number');

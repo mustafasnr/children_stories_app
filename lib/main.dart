@@ -32,7 +32,7 @@ Future<void> main() async {
     ),
   );
 
-  // Initialize Adapty (non-fatal if key not yet set)
+  // Initialize Adapty
   try {
     final config = AdaptyConfiguration(apiKey: AppConstants.adaptyPublicKey)
       ..withLogLevel(AdaptyLogLevel.verbose);

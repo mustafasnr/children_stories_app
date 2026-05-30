@@ -11,15 +11,19 @@ class AudioPlayerBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
       decoration: BoxDecoration(
-        gradient: AppColors.primaryGradient,
-        borderRadius: BorderRadius.circular(20),
+        color: AppColors.surface.withValues(alpha: 0.95),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.12),
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.35),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
+            color: AppColors.primary.withValues(alpha: 0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -44,15 +48,15 @@ class AudioPlayerBar extends StatelessWidget {
                     children: [
                       SliderTheme(
                         data: SliderThemeData(
-                          thumbColor: Colors.white,
-                          activeTrackColor: Colors.white,
-                          inactiveTrackColor: Colors.white.withValues(
-                            alpha: 0.3,
+                          thumbColor: AppColors.primary,
+                          activeTrackColor: AppColors.primary,
+                          inactiveTrackColor: AppColors.primary.withValues(
+                            alpha: 0.15,
                           ),
                           thumbShape: const RoundSliderThumbShape(
                             enabledThumbRadius: 6,
                           ),
-                          trackHeight: 3,
+                          trackHeight: 4,
                           overlayShape: SliderComponentShape.noOverlay,
                         ),
                         child: Slider(
@@ -63,6 +67,7 @@ class AudioPlayerBar extends StatelessWidget {
                           ),
                         ),
                       ),
+                      const SizedBox(height: 8),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 4),
                         child: Row(
@@ -70,16 +75,18 @@ class AudioPlayerBar extends StatelessWidget {
                           children: [
                             Text(
                               _fmt(pos),
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 11,
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                             Text(
                               _fmt(dur),
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 11,
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ],
@@ -91,6 +98,7 @@ class AudioPlayerBar extends StatelessWidget {
               );
             },
           ),
+          const SizedBox(height: 12),
           // Controls
           StreamBuilder<PlayerState>(
             stream: audioService.playerStateStream,
@@ -104,27 +112,35 @@ class AudioPlayerBar extends StatelessWidget {
                     icon: Icons.replay_10_rounded,
                     onTap: () => audioService.rewind(),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 24),
                   // Play / Pause
                   GestureDetector(
                     onTap: playing ? audioService.pause : audioService.play,
-                    child: Container(
-                      width: 48,
-                      height: 48,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: 56,
+                      height: 56,
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
+                        color: AppColors.primary,
                         shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.35),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
                       child: Icon(
                         playing
                             ? Icons.pause_rounded
                             : Icons.play_arrow_rounded,
                         color: Colors.white,
-                        size: 30,
+                        size: 32,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 24),
                   // Forward 10s
                   _ctrlBtn(
                     icon: Icons.forward_10_rounded,
@@ -140,10 +156,17 @@ class AudioPlayerBar extends StatelessWidget {
   }
 
   Widget _ctrlBtn({required IconData icon, required VoidCallback onTap}) =>
-      IconButton(
-        icon: Icon(icon, color: Colors.white, size: 26),
-        onPressed: onTap,
-        padding: const EdgeInsets.all(8),
+      Container(
+        decoration: BoxDecoration(
+          color: AppColors.surfaceVariant.withValues(alpha: 0.3),
+          shape: BoxShape.circle,
+        ),
+        child: IconButton(
+          icon: Icon(icon, color: AppColors.primary, size: 22),
+          onPressed: onTap,
+          padding: const EdgeInsets.all(10),
+          constraints: const BoxConstraints(),
+        ),
       );
 
   String _fmt(Duration d) {

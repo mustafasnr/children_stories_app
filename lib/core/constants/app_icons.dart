@@ -20,4 +20,12 @@ class AppIcons {
   static IconData get genderNeuter => PhosphorIconsBold.user;
   static IconData get sparkle => PhosphorIconsBold.sparkle;
   static IconData get textSize => PhosphorIconsBold.textT;
+
+  // Audio Player Icons
+  static IconData get play => PhosphorIconsBold.play;
+  static IconData get pause => PhosphorIconsBold.pause;
+  static IconData get skipBack => PhosphorIconsBold.skipBack;
+  static IconData get skipForward => PhosphorIconsBold.skipForward;
+  static IconData get rewind => PhosphorIconsBold.rewind;
+  static IconData get fastForward => PhosphorIconsBold.fastForward;
 }

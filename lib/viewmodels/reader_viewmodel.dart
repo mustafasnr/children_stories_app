@@ -56,6 +56,17 @@ class ReaderViewModel extends ChangeNotifier {
     }
   }
 
+  int getPageIndexForPosition(Duration position) {
+    if (_pages.isEmpty) return 0;
+    final seconds = position.inMilliseconds / 1000.0;
+    for (int i = _pages.length - 1; i >= 0; i--) {
+      if (seconds >= _pages[i].audioSeekSeconds) {
+        return i;
+      }
+    }
+    return 0;
+  }
+
   void nextPage() {
     if (!isLastPage) goToPage(_currentPageIndex + 1);
   }

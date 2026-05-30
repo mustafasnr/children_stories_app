@@ -3,6 +3,7 @@ import 'package:children_stories/data/models/category_model.dart';
 import 'package:children_stories/data/models/language_model.dart';
 import 'package:children_stories/data/repositories/book_repository.dart';
 import 'package:flutter/foundation.dart' hide Category;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeViewModel extends ChangeNotifier {
   final BookRepository _repository = BookRepository();
@@ -55,7 +56,27 @@ class HomeViewModel extends ChangeNotifier {
     notifyListeners();
     try {
       _languages = await _repository.getLanguages();
-      if (_languages.isNotEmpty) await _refreshAll();
+      if (_languages.isNotEmpty) {
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          final savedCode = prefs.getString('selected_language_code');
+          if (savedCode != null) {
+            final idx = _languages.indexWhere((l) => l.code == savedCode);
+            if (idx != -1) {
+              _selectedLanguageIndex = idx;
+            }
+          } else {
+            // Default to English if no preference is saved
+            final enIdx = _languages.indexWhere((l) => l.code == 'en');
+            if (enIdx != -1) {
+              _selectedLanguageIndex = enIdx;
+            }
+          }
+        } catch (e) {
+          debugPrint('[HomeVM] error loading language preference: $e');
+        }
+        await _refreshAll();
+      }
     } catch (e) {
       _error = 'Failed to load content. Pull to refresh.';
       debugPrint('[HomeVM] initialize error: $e');
@@ -78,6 +99,17 @@ class HomeViewModel extends ChangeNotifier {
     _selectedLanguageIndex = index;
     _selectedCategoryId = null;
     notifyListeners();
+    
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final lang = selectedLanguage;
+      if (lang != null) {
+        await prefs.setString('selected_language_code', lang.code);
+      }
+    } catch (e) {
+      debugPrint('[HomeVM] error saving language preference: $e');
+    }
+
     await _refreshAll(); // Will fetch if not cached, or update in background if cached
   }
 

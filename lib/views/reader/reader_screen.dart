@@ -1,14 +1,18 @@
+import 'dart:async';
 import 'package:children_stories/app/theme/app_colors.dart';
 import 'package:children_stories/app/theme/app_text_styles.dart';
+import 'package:children_stories/core/constants/app_icons.dart';
 import 'package:children_stories/core/services/audio_service.dart';
+import 'package:children_stories/data/models/book_page_model.dart';
 import 'package:children_stories/viewmodels/home_viewmodel.dart';
 import 'package:children_stories/viewmodels/reader_viewmodel.dart';
 import 'package:children_stories/viewmodels/subscription_viewmodel.dart';
 import 'package:children_stories/viewmodels/theme_viewmodel.dart';
-import 'package:children_stories/views/reader/widgets/audio_player_bar.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:just_audio/just_audio.dart';
 
 class ReaderScreen extends StatefulWidget {
   final String bookId;
@@ -23,6 +27,14 @@ class _ReaderScreenState extends State<ReaderScreen> {
   late final PageController _pageController;
   late final AudioService _audioService;
   bool _audioInitialized = false;
+  StreamSubscription<Duration>? _positionSubscription;
+  StreamSubscription<PlayerState>? _playerStateSubscription;
+  bool _isHandlingAudioSync = false;
+
+  // Mock audio state variables
+  Timer? _mockTimer;
+  bool _mockIsPlaying = false;
+  double _mockPositionSeconds = 0.0;
 
   @override
   void initState() {
@@ -44,9 +56,38 @@ class _ReaderScreenState extends State<ReaderScreen> {
         _audioInitialized = true;
         _audioService.init().then((_) {
           _audioService.loadUrl(_vm.audio!.audioUrl);
+          _setupAudioSyncListener();
         });
       }
     }
+  }
+
+  void _setupAudioSyncListener() {
+    _positionSubscription = _audioService.positionStream.listen((pos) {
+      setState(() {}); // Rebuild UI to update slider progress
+      
+      if (_isHandlingAudioSync) return;
+      if (!_vm.hasAudio || _vm.pages.isEmpty) return;
+
+      final targetIdx = _vm.getPageIndexForPosition(pos);
+      if (targetIdx != _vm.currentPageIndex) {
+        _isHandlingAudioSync = true;
+        _vm.goToPage(targetIdx);
+        _pageController
+            .animateToPage(
+          targetIdx,
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeInOut,
+        )
+            .then((_) {
+          _isHandlingAudioSync = false;
+        });
+      }
+    });
+
+    _playerStateSubscription = _audioService.playerStateStream.listen((state) {
+      setState(() {}); // Rebuild play/pause buttons on state changes
+    });
   }
 
   @override
@@ -54,8 +95,273 @@ class _ReaderScreenState extends State<ReaderScreen> {
     _vm.removeListener(_onVMChange);
     _vm.dispose();
     _pageController.dispose();
+    _positionSubscription?.cancel();
+    _playerStateSubscription?.cancel();
+    _mockTimer?.cancel();
     _audioService.dispose();
     super.dispose();
+  }
+
+  // Unified helpers for audio playback (delegating to real audio or mock)
+  bool get _useRealAudio {
+    if (!_vm.hasAudio) return false;
+    final subVM = context.read<SubscriptionViewModel>();
+    return subVM.isPremium;
+  }
+
+  double get _currentPositionSeconds {
+    if (_useRealAudio) {
+      return _audioService.position.inMilliseconds / 1000.0;
+    } else {
+      return _mockPositionSeconds;
+    }
+  }
+
+  double get _totalDurationSeconds {
+    if (_useRealAudio) {
+      final dur = _audioService.duration;
+      return (dur != null && dur.inSeconds > 0)
+          ? dur.inMilliseconds / 1000.0
+          : (_vm.pages.length * 15.0);
+    } else {
+      return _mockDurationSeconds;
+    }
+  }
+
+  double get _mockDurationSeconds => _vm.pages.length * 15.0; // 15 seconds per page mock
+
+  bool get _isPlaying {
+    if (_useRealAudio) {
+      return _audioService.isPlaying;
+    } else {
+      return _mockIsPlaying;
+    }
+  }
+
+  void _togglePlay() {
+    if (_useRealAudio) {
+      if (_audioService.isPlaying) {
+        _audioService.pause();
+      } else {
+        _audioService.play();
+      }
+    } else {
+      setState(() {
+        _mockIsPlaying = !_mockIsPlaying;
+        if (_mockIsPlaying) {
+          _startMockTimer();
+        } else {
+          _mockTimer?.cancel();
+        }
+      });
+    }
+  }
+
+  void _startMockTimer() {
+    _mockTimer?.cancel();
+    _mockTimer = Timer.periodic(const Duration(milliseconds: 200), (timer) {
+      if (!_mockIsPlaying) {
+        timer.cancel();
+        return;
+      }
+      setState(() {
+        _mockPositionSeconds += 0.2;
+        if (_mockPositionSeconds >= _mockDurationSeconds) {
+          _mockPositionSeconds = _mockDurationSeconds;
+          _mockIsPlaying = false;
+          timer.cancel();
+        }
+
+        // Synchronize page based on mock timer progress (15 seconds per page)
+        final targetIdx = (_mockPositionSeconds / 15.0).floor().clamp(0, _vm.pages.length - 1);
+        if (targetIdx != _vm.currentPageIndex) {
+          _isHandlingAudioSync = true;
+          _vm.goToPage(targetIdx);
+          _pageController
+              .animateToPage(
+            targetIdx,
+            duration: const Duration(milliseconds: 350),
+            curve: Curves.easeInOut,
+          )
+              .then((_) {
+            _isHandlingAudioSync = false;
+          });
+        }
+      });
+    });
+  }
+
+  void _seekTo(double seconds) {
+    if (_useRealAudio) {
+      _audioService.seek(Duration(milliseconds: (seconds * 1000).toInt()));
+    } else {
+      setState(() {
+        _mockPositionSeconds = seconds.clamp(0.0, _mockDurationSeconds);
+        final targetIdx = (_mockPositionSeconds / 15.0).floor().clamp(0, _vm.pages.length - 1);
+        if (targetIdx != _vm.currentPageIndex) {
+          _isHandlingAudioSync = true;
+          _vm.goToPage(targetIdx);
+          _pageController
+              .animateToPage(
+            targetIdx,
+            duration: const Duration(milliseconds: 350),
+            curve: Curves.easeInOut,
+          )
+              .then((_) {
+            _isHandlingAudioSync = false;
+          });
+        }
+      });
+    }
+  }
+
+  void _next() {
+    if (_vm.isLastPage) return;
+    final nextIdx = _vm.currentPageIndex + 1;
+    _navigateToPage(nextIdx);
+  }
+
+  void _previous() {
+    if (_vm.isFirstPage) return;
+    final prevIdx = _vm.currentPageIndex - 1;
+    _navigateToPage(prevIdx);
+  }
+
+  void _skipToStart() {
+    _navigateToPage(0);
+  }
+
+  void _skipToEnd() {
+    _navigateToPage(_vm.pages.length - 1);
+  }
+
+  void _navigateToPage(int index) {
+    if (index < 0 || index >= _vm.pages.length) return;
+
+    _isHandlingAudioSync = true;
+    _vm.goToPage(index);
+    _pageController
+        .animateToPage(
+      index,
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeInOut,
+    )
+        .then((_) {
+      _isHandlingAudioSync = false;
+    });
+
+    if (_useRealAudio) {
+      final seekTarget = Duration(
+        milliseconds: (_vm.pages[index].audioSeekSeconds * 1000).toInt(),
+      );
+      _audioService.seek(seekTarget);
+    } else {
+      setState(() {
+        _mockPositionSeconds = index * 15.0;
+      });
+    }
+  }
+
+  void _showTextSizeDialog(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Consumer<ThemeViewModel>(
+          builder: (context, themeVM, _) {
+            return Container(
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.15),
+                    blurRadius: 20,
+                    offset: const Offset(0, -4),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 36,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: AppColors.textHint.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Icon(Icons.format_size_rounded, color: AppColors.primary, size: 22),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Story Font Size',
+                        style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Text(
+                        'A',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                      Expanded(
+                        child: SliderTheme(
+                          data: SliderTheme.of(context).copyWith(
+                            activeTrackColor: AppColors.primary,
+                            inactiveTrackColor: AppColors.surfaceVariant,
+                            thumbColor: AppColors.primary,
+                            overlayColor: AppColors.primary.withValues(alpha: 0.12),
+                            trackHeight: 4,
+                          ),
+                          child: Slider(
+                            value: themeVM.storyTextSizeStep,
+                            min: 1.0,
+                            max: 10.0,
+                            divisions: 9,
+                            onChanged: (val) {
+                              themeVM.setStoryTextSizeStep(val);
+                            },
+                          ),
+                        ),
+                      ),
+                      Text(
+                        'A',
+                        style: TextStyle(
+                          fontSize: 24,
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Center(
+                    child: Text(
+                      'Preview Size: ${themeVM.storyTextSize.toInt()} px',
+                      style: AppTextStyles.labelMedium.copyWith(color: AppColors.textSecondary),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -81,63 +387,42 @@ class _ReaderScreenState extends State<ReaderScreen> {
             );
           }
 
-          final subVM = context.watch<SubscriptionViewModel>();
-          final showAudio = vm.hasAudio && subVM.isPremium;
-
           return Scaffold(
             body: SafeArea(
+              bottom: false,
               child: Column(
                 children: [
-                  // Custom app bar
+                  // Custom top app bar
                   _buildTopBar(context, vm),
                   // Page content
                   Expanded(
                     child: PageView.builder(
                       controller: _pageController,
                       itemCount: vm.pages.length,
-                      onPageChanged: vm.goToPage,
+                      onPageChanged: (index) {
+                        if (_isHandlingAudioSync) return;
+                        vm.goToPage(index);
+                        if (_useRealAudio) {
+                          final seekTarget = Duration(
+                            milliseconds: (vm.pages[index].audioSeekSeconds * 1000).toInt(),
+                          );
+                          _audioService.seek(seekTarget);
+                        } else {
+                          setState(() {
+                            _mockPositionSeconds = index * 15.0;
+                          });
+                        }
+                      },
                       itemBuilder: (_, index) {
                         final page = vm.pages[index];
-                        return SingleChildScrollView(
-                          padding: const EdgeInsets.fromLTRB(28, 24, 28, 24),
-                          child: Column(
-                            children: [
-                              // Page number indicator
-                              Text(
-                                'Page ${page.pageNumber}',
-                                style: AppTextStyles.labelSmall.copyWith(
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                              const SizedBox(height: 20),
-                              Text(
-                                page.textContent,
-                                style: AppTextStyles.readerText.copyWith(
-                                  fontSize: context.watch<ThemeViewModel>().storyTextSize,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          ),
-                        );
+                        return _buildPageContent(vm, page);
                       },
                     ),
                   ),
-                  // Page dots
-                  _buildPageDots(vm),
-                  // Navigation arrows
-                  _buildNavigation(vm),
-                  // Audio player
-                  if (showAudio) ...[
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-                      child: AudioPlayerBar(audioService: _audioService),
-                    ),
-                  ],
-                  const SizedBox(height: 8),
                 ],
               ),
             ),
+            bottomNavigationBar: _buildAudiobookController(),
           );
         },
       ),
@@ -145,119 +430,274 @@ class _ReaderScreenState extends State<ReaderScreen> {
   }
 
   Widget _buildTopBar(BuildContext context, ReaderViewModel vm) {
+    final themeVM = context.watch<ThemeViewModel>();
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      decoration: BoxDecoration(
+        color: AppColors.surface.withValues(alpha: 0.85),
+        border: Border(
+          bottom: BorderSide(
+            color: AppColors.textHint.withValues(alpha: 0.08),
+            width: 1,
+          ),
+        ),
+      ),
       child: Row(
         children: [
           IconButton(
             icon: const Icon(Icons.close_rounded),
             onPressed: () => context.pop(),
             style: IconButton.styleFrom(
-              backgroundColor: AppColors.surfaceVariant,
+              backgroundColor: AppColors.surfaceVariant.withValues(alpha: 0.4),
+              foregroundColor: AppColors.textPrimary,
               shape: const CircleBorder(),
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              vm.book?.title ?? '',
-              style: AppTextStyles.titleMedium,
-              overflow: TextOverflow.ellipsis,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  vm.book?.title ?? '',
+                  style: AppTextStyles.titleMedium.copyWith(
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: -0.3,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Page ${vm.currentPageIndex + 1} of ${vm.totalPages}',
+                  style: AppTextStyles.labelSmall.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
             ),
           ),
-          Text(
-            '${vm.currentPageIndex + 1} / ${vm.totalPages}',
-            style: AppTextStyles.labelMedium,
+          IconButton(
+            icon: Icon(
+              themeVM.isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+            ),
+            onPressed: () {
+              themeVM.toggleTheme();
+            },
+            style: IconButton.styleFrom(
+              backgroundColor: AppColors.surfaceVariant.withValues(alpha: 0.4),
+              foregroundColor: AppColors.textPrimary,
+              shape: const CircleBorder(),
+            ),
+          ),
+          const SizedBox(width: 8),
+          IconButton(
+            icon: const Icon(Icons.format_size_rounded),
+            onPressed: () => _showTextSizeDialog(context),
+            style: IconButton.styleFrom(
+              backgroundColor: AppColors.surfaceVariant.withValues(alpha: 0.4),
+              foregroundColor: AppColors.textPrimary,
+              shape: const CircleBorder(),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildPageDots(ReaderViewModel vm) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: List.generate(vm.totalPages, (index) {
-          final isActive = index == vm.currentPageIndex;
-          return AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            margin: const EdgeInsets.symmetric(horizontal: 3),
-            width: isActive ? 20 : 6,
-            height: 6,
-            decoration: BoxDecoration(
-              color: isActive
-                  ? AppColors.primary
-                  : AppColors.primary.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(3),
+  Widget _buildPageContent(ReaderViewModel vm, BookPage page) {
+    final isDark = context.watch<ThemeViewModel>().isDarkMode;
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Container(
+          width: double.infinity,
+          constraints: const BoxConstraints(maxWidth: 600),
+          decoration: BoxDecoration(
+            color: isDark
+                ? AppColors.surface.withValues(alpha: 0.4)
+                : const Color(0xFFFCF9F2), // Cozy paper background
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(
+              color: isDark
+                  ? AppColors.surfaceVariant.withValues(alpha: 0.15)
+                  : const Color(0xFFF3EFE0),
+              width: 1.5,
             ),
-          );
-        }),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.12 : 0.04),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (page.imageUrl != null && page.imageUrl!.isNotEmpty) ...[
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: CachedNetworkImage(
+                    imageUrl: page.imageUrl!,
+                    fit: BoxFit.cover,
+                    placeholder: (_, _) => Container(
+                      height: 220,
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceVariant.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Center(child: CircularProgressIndicator()),
+                    ),
+                    errorWidget: (_, _, _) => const SizedBox.shrink(),
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ],
+              Text(
+                page.textContent,
+                style: AppTextStyles.readerText.copyWith(
+                  fontSize: context.watch<ThemeViewModel>().storyTextSize,
+                  height: 1.6,
+                  letterSpacing: 0.1,
+                  color: isDark ? AppColors.textPrimary : const Color(0xFF2E2C29),
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildNavigation(ReaderViewModel vm) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _navButton(
-            icon: Icons.arrow_back_ios_rounded,
-            onTap: vm.isFirstPage
-                ? null
-                : () {
-                    vm.previousPage();
-                    _pageController.previousPage(
-                      duration: const Duration(milliseconds: 350),
-                      curve: Curves.easeInOut,
-                    );
-                  },
-          ),
-          if (vm.isLastPage)
-            ElevatedButton.icon(
-              onPressed: () => context.pop(),
-              icon: const Icon(Icons.check_rounded, size: 18),
-              label: const Text('Finish'),
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(120, 44),
-                padding: const EdgeInsets.symmetric(horizontal: 24),
+  Widget _buildAudiobookController() {
+    final pos = _currentPositionSeconds;
+    final dur = _totalDurationSeconds;
+    final playing = _isPlaying;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+      ),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Full-width Spotify-style seek slider at y=0 (top edge)
+            SliderTheme(
+              data: SliderThemeData(
+                trackHeight: 2.0,
+                trackShape: FullWidthTrackShape(),
+                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
+                thumbColor: AppColors.primary,
+                activeTrackColor: AppColors.primary,
+                inactiveTrackColor: AppColors.textHint.withValues(alpha: isDark ? 0.15 : 0.1),
+                overlayShape: SliderComponentShape.noOverlay,
+              ),
+              child: SizedBox(
+                height: 12,
+                child: Slider(
+                  value: pos.clamp(0.0, dur > 0 ? dur : 1.0),
+                  max: dur > 0 ? dur : 1.0,
+                  onChanged: _seekTo,
+                ),
               ),
             ),
-          _navButton(
-            icon: Icons.arrow_forward_ios_rounded,
-            onTap: vm.isLastPage
-                ? null
-                : () {
-                    vm.nextPage();
-                    _pageController.nextPage(
-                      duration: const Duration(milliseconds: 350),
-                      curve: Curves.easeInOut,
-                    );
-                  },
-          ),
-        ],
+            const SizedBox(height: 6),
+            // Time Labels
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    _formatDuration(Duration(milliseconds: (pos * 1000).toInt())),
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    _formatDuration(Duration(milliseconds: (dur * 1000).toInt())),
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+            // Podcast/Audiobook Control Row using Phosphor icons via AppIcons
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  // Skip to Start (En Baş)
+                  _controlBtn(
+                    icon: AppIcons.skipBack,
+                    onTap: _skipToStart,
+                  ),
+                  // Previous Page
+                  _controlBtn(
+                    icon: AppIcons.arrowLeft,
+                    onTap: _vm.isFirstPage ? null : _previous,
+                  ),
+                  // Play / Pause
+                  _controlBtn(
+                    icon: playing ? AppIcons.pause : AppIcons.play,
+                    onTap: _togglePlay,
+                    size: 26,
+                    isPrimary: true,
+                  ),
+                  // Next Page
+                  _controlBtn(
+                    icon: AppIcons.arrowRight,
+                    onTap: _vm.isLastPage ? null : _next,
+                  ),
+                  // Skip to End (En Son)
+                  _controlBtn(
+                    icon: AppIcons.skipForward,
+                    onTap: _skipToEnd,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _navButton({required IconData icon, required VoidCallback? onTap}) {
+  Widget _controlBtn({
+    required IconData icon,
+    required VoidCallback? onTap,
+    double size = 18,
+    bool isPrimary = false,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        width: 48,
-        height: 48,
+        padding: EdgeInsets.all(isPrimary ? 14 : 10),
         decoration: BoxDecoration(
-          color: onTap != null ? AppColors.primary : AppColors.surfaceVariant,
+          color: isPrimary
+              ? AppColors.primary
+              : onTap != null
+                  ? AppColors.primary.withValues(alpha: 0.08)
+                  : AppColors.surfaceVariant.withValues(alpha: 0.2),
           shape: BoxShape.circle,
-          boxShadow: onTap != null
+          boxShadow: isPrimary
               ? [
                   BoxShadow(
-                    color: AppColors.primary.withValues(alpha: 0.3),
-                    blurRadius: 10,
+                    color: AppColors.primary.withValues(alpha: 0.35),
+                    blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
                 ]
@@ -265,10 +705,38 @@ class _ReaderScreenState extends State<ReaderScreen> {
         ),
         child: Icon(
           icon,
-          color: onTap != null ? Colors.white : AppColors.textHint,
-          size: 20,
+          size: size,
+          color: isPrimary
+              ? Colors.white
+              : onTap != null
+                  ? AppColors.primary
+                  : AppColors.textHint,
         ),
       ),
     );
+  }
+
+  String _formatDuration(Duration d) {
+    final m = d.inMinutes;
+    final s = d.inSeconds % 60;
+    return '$m:${s.toString().padLeft(2, '0')}';
+  }
+}
+
+// Custom full-width track shape that places the seek line exactly at y=0 (no padding)
+class FullWidthTrackShape extends RectangularSliderTrackShape {
+  @override
+  Rect getPreferredRect({
+    required RenderBox parentBox,
+    Offset offset = Offset.zero,
+    required SliderThemeData sliderTheme,
+    bool isEnabled = false,
+    bool isDiscrete = false,
+  }) {
+    final double trackHeight = sliderTheme.trackHeight ?? 2.0;
+    final double trackLeft = offset.dx;
+    final double trackTop = offset.dy; // Align with y=0 of the Slider bounding box
+    final double trackWidth = parentBox.size.width;
+    return Rect.fromLTWH(trackLeft, trackTop, trackWidth, trackHeight);
   }
 }
