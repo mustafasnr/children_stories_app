@@ -4,12 +4,12 @@ import 'package:children_stories/data/models/language_model.dart';
 import 'package:country_flags/country_flags.dart';
 import 'package:flutter/material.dart';
 
-class LanguageSelector extends StatelessWidget {
+class StoryLanguageSelector extends StatelessWidget {
   final List<Language> languages;
   final int selectedIndex;
   final ValueChanged<int> onSelected;
 
-  const LanguageSelector({
+  const StoryLanguageSelector({
     super.key,
     required this.languages,
     required this.selectedIndex,
@@ -36,7 +36,13 @@ class LanguageSelector extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 color: isSelected ? AppColors.primary : AppColors.surface,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(100),
+                border: Border.all(
+                  color: isSelected
+                      ? AppColors.primary
+                      : AppColors.textHint.withValues(alpha: 0.15),
+                  width: 1.2,
+                ),
                 boxShadow: isSelected
                     ? [
                         BoxShadow(
@@ -48,9 +54,10 @@ class LanguageSelector extends StatelessWidget {
                     : [
                         BoxShadow(
                           color: Colors.black.withValues(
-                              alpha: AppColors.current == AppColors.darkScheme
-                                  ? 0.2
-                                  : 0.06),
+                            alpha: AppColors.current == AppColors.darkScheme
+                                ? 0.1
+                                : 0.03,
+                          ),
                           blurRadius: 6,
                           offset: const Offset(0, 2),
                         ),

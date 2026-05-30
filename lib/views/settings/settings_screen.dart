@@ -7,22 +7,21 @@ import 'package:children_stories/viewmodels/auth_viewmodel.dart';
 import 'package:children_stories/viewmodels/profile_viewmodel.dart';
 import 'package:children_stories/viewmodels/subscription_viewmodel.dart';
 import 'package:children_stories/viewmodels/theme_viewmodel.dart';
-import 'package:children_stories/views/profile/widgets/anon_upgrade_card.dart';
-import 'package:children_stories/views/profile/widgets/premium_card.dart';
-import 'package:children_stories/views/profile/widgets/settings_section.dart';
-import 'package:children_stories/views/profile/widgets/user_header.dart';
+import 'package:children_stories/views/settings/widgets/anon_upgrade_card.dart';
+import 'package:children_stories/views/settings/widgets/premium_card.dart';
+import 'package:children_stories/views/settings/widgets/settings_section.dart';
+import 'package:children_stories/views/settings/widgets/user_header.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+class SettingsScreen extends StatefulWidget {
+  const SettingsScreen({super.key});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class _SettingsScreenState extends State<SettingsScreen> {
   late final ProfileViewModel _vm;
 
   @override
@@ -67,16 +66,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               elevation: 0,
               scrolledUnderElevation: 0,
               centerTitle: true,
-              leading: IconButton(
-                icon: Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  color: Theme.of(context).colorScheme.onSurface,
-                  size: 20,
-                ),
-                onPressed: () => context.pop(),
-              ),
+              automaticallyImplyLeading: false,
               title: Text(
-                'Profile',
+                'Settings',
                 style: AppTextStyles.headlineLarge.copyWith(
                   color: Theme.of(context).colorScheme.onSurface,
                   fontWeight: FontWeight.w700,

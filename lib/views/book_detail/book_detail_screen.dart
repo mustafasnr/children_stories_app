@@ -2,8 +2,10 @@ import 'package:children_stories/app/theme/app_colors.dart';
 import 'package:children_stories/app/theme/app_text_styles.dart';
 import 'package:children_stories/viewmodels/book_detail_viewmodel.dart';
 import 'package:children_stories/viewmodels/home_viewmodel.dart';
+import 'package:children_stories/viewmodels/auth_viewmodel.dart';
 import 'package:children_stories/viewmodels/subscription_viewmodel.dart';
 import 'package:children_stories/core/services/adapty_service.dart';
+import 'package:children_stories/core/services/toast_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -26,7 +28,8 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
     _vm = BookDetailViewModel();
     final langCode =
         context.read<HomeViewModel>().selectedLanguage?.code ?? 'en';
-    _vm.loadBook(widget.bookId, langCode);
+    final userId = context.read<AuthViewModel>().currentUser?.id;
+    _vm.loadBook(widget.bookId, langCode, userId: userId);
   }
 
   @override
@@ -82,6 +85,48 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                       ),
                     ),
                   ),
+                  actions: [
+                    Consumer<BookDetailViewModel>(
+                      builder: (context, vm, _) {
+                        final authVM = context.read<AuthViewModel>();
+                        final isBookmarked = vm.isBookmarked;
+
+                        return GestureDetector(
+                          onTap: () {
+                            if (authVM.isAnonymous) {
+                              ToastService.showInfo(
+                                'Please sign in to bookmark stories',
+                              );
+                            } else {
+                              final userId = authVM.currentUser?.id;
+                              if (userId != null) {
+                                vm.toggleBookmark(userId);
+                              }
+                            }
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.all(8),
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.9),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              isBookmarked
+                                  ? Icons.bookmark_rounded
+                                  : Icons.bookmark_border_rounded,
+                              size: 20,
+                              color: isBookmarked
+                                  ? AppColors.primary
+                                  : AppColors.textPrimary,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                  ],
                   flexibleSpace: FlexibleSpaceBar(
                     background: book.coverUrl != null
                         ? CachedNetworkImage(

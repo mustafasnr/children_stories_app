@@ -2,9 +2,12 @@ import 'package:children_stories/app/theme/app_colors.dart';
 import 'package:children_stories/app/theme/app_text_styles.dart';
 import 'package:children_stories/viewmodels/auth_viewmodel.dart';
 import 'package:children_stories/views/auth/widgets/social_login_button.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'dart:io';
 import 'dart:ui';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 class LoginScreen extends StatelessWidget {
@@ -12,213 +15,260 @@ class LoginScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(gradient: AppColors.splashGradient),
-        child: Stack(
-          children: [
-            _buildBgCircles(),
-            SafeArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minHeight:
-                        MediaQuery.of(context).size.height -
-                        MediaQuery.of(context).padding.top -
-                        MediaQuery.of(context).padding.bottom,
-                  ),
-                  child: IntrinsicHeight(
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 56),
-                        _buildHeader(),
-                        const SizedBox(height: 40),
-                        _buildFeatures(),
-                        const Spacer(),
-                        const SizedBox(height: 32),
-                        _buildCard(context),
-                        const SizedBox(height: 20),
-                        _buildTerms(),
-                        const SizedBox(height: 32),
-                      ],
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light, // Android: white icons
+        statusBarBrightness: Brightness.dark, // iOS: white text/icons
+      ),
+      child: Stack(
+        children: [
+          // 1. Magical Background Image covering the upper part of the screen
+          Positioned.fill(
+            child: Image.asset('assets/images/login_bg.jpg', fit: BoxFit.cover),
+          ),
+          // 2. Smooth fade-out gradient mask from transparent to black
+          Positioned.fill(
+            child: Container(color: Colors.black.withValues(alpha: 0.6)),
+          ),
+          // 3. Transparent Scaffold for UI elements
+          Scaffold(
+            backgroundColor: Colors.transparent,
+            extendBody: true,
+            body: SafeArea(
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24.0,
+                  vertical: 24.0,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(height: 32),
+                    TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0.0, end: 1.0),
+                      duration: const Duration(seconds: 1),
+                      builder: (_, v, child) => Opacity(
+                        opacity: v,
+                        child: Transform.rotate(angle: v * 0.15, child: child),
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.amber.withValues(alpha: 0.25),
+                            width: 1,
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.auto_awesome_rounded,
+                          color: Colors.amber,
+                          size: 28,
+                        ),
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Story Time',
+                      style: AppTextStyles.displayLarge.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Magical stories for curious minds',
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: Colors.white.withValues(alpha: 0.7),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const Spacer(flex: 3),
+                    const _LoginCard(),
+                    const Spacer(flex: 1),
+                    const _TermsText(),
+                  ],
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
+}
 
-  Widget _buildBgCircles() {
-    return Stack(
-      children: [
-        Positioned(top: -80, right: -80, child: _circle(260, 0.05)),
-        Positioned(bottom: -100, left: -60, child: _circle(300, 0.05)),
-      ],
-    );
+class _TermsText extends StatefulWidget {
+  const _TermsText();
+
+  @override
+  State<_TermsText> createState() => _TermsTextState();
+}
+
+class _TermsTextState extends State<_TermsText> {
+  late TapGestureRecognizer _termsRecognizer;
+  late TapGestureRecognizer _privacyRecognizer;
+
+  @override
+  void initState() {
+    super.initState();
+    _termsRecognizer = TapGestureRecognizer()..onTap = _openTerms;
+    _privacyRecognizer = TapGestureRecognizer()..onTap = _openPrivacy;
   }
 
-  Widget _circle(double size, double opacity) => Container(
-    width: size,
-    height: size,
-    decoration: BoxDecoration(
-      shape: BoxShape.circle,
-      color: Colors.white.withValues(alpha: opacity),
-    ),
-  );
-
-  Widget _buildHeader() {
-    return Column(
-      children: [
-        TweenAnimationBuilder<double>(
-          tween: Tween(begin: 0.0, end: 1.0),
-          duration: const Duration(milliseconds: 700),
-          builder: (_, v, child) => Opacity(
-            opacity: v,
-            child: Transform.scale(scale: 0.6 + v * 0.4, child: child),
-          ),
-          child: Container(
-            width: 110,
-            height: 110,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white.withValues(alpha: 0.15),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.3),
-                width: 2,
-              ),
-            ),
-            child: const Center(
-              child: Text('📚', style: TextStyle(fontSize: 56)),
-            ),
-          ),
-        ),
-        const SizedBox(height: 20),
-        Text(
-          'Story Time',
-          style: AppTextStyles.displayMedium.copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'Magical stories for curious minds',
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: Colors.white.withValues(alpha: 0.75),
-          ),
-        ),
-      ],
-    );
+  @override
+  void dispose() {
+    _termsRecognizer.dispose();
+    _privacyRecognizer.dispose();
+    super.dispose();
   }
 
-  Widget _buildFeatures() {
-    final items = [
-      ('📖', 'Free Stories'),
-      ('🌍', 'Languages'),
-      ('🎧', 'Audio'),
-    ];
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: items
-          .map(
-            (f) => Column(
-              children: [
-                Text(f.$1, style: const TextStyle(fontSize: 28)),
-                const SizedBox(height: 6),
-                Text(
-                  f.$2,
-                  style: AppTextStyles.labelSmall.copyWith(
-                    color: Colors.white.withValues(alpha: 0.8),
-                  ),
-                ),
-              ],
-            ),
-          )
-          .toList(),
-    );
+  void _openTerms() {
+    debugPrint('Terms of Service clicked - Navigate to URL');
   }
 
-  Widget _buildCard(BuildContext context) {
+  void _openPrivacy() {
+    debugPrint('Privacy Policy clicked - Navigate to URL');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return RichText(
+      textAlign: TextAlign.center,
+      text: TextSpan(
+        style: AppTextStyles.labelSmall.copyWith(
+          color: Colors.white.withValues(alpha: 0.5),
+          fontSize: 12.0,
+          height: 1.5,
+        ),
+        children: [
+          const TextSpan(text: 'By continuing you agree to our '),
+          TextSpan(
+            text: 'Terms of Service',
+            recognizer: _termsRecognizer,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const TextSpan(text: '\nand '),
+          TextSpan(
+            text: 'Privacy Policy',
+            recognizer: _privacyRecognizer,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const TextSpan(text: '.'),
+        ],
+      ),
+    );
+  }
+}
+
+class _LoginCard extends StatelessWidget {
+  const _LoginCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
     return Consumer<AuthViewModel>(
       builder: (context, authVM, _) {
         return ClipRRect(
           borderRadius: BorderRadius.circular(28),
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
             child: Container(
+              width: size.width * 0.75,
               padding: const EdgeInsets.all(28),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
+                color: Colors.white.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(28),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  width: 1.0,
+                ),
               ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Text(
                     'Get Started',
                     style: AppTextStyles.headlineMedium.copyWith(
                       color: Colors.white,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w800,
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   Text(
                     'Sign in to start your reading adventure',
                     style: AppTextStyles.bodySmall.copyWith(
-                      color: Colors.white.withValues(alpha: 0.7),
+                      color: Colors.white.withValues(alpha: 0.6),
                     ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 24),
                   if (authVM.error != null) ...[
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.red.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.error_outline,
-                            color: Colors.white,
-                            size: 18,
+                    SizedBox(
+                      width: double.infinity,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.error.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: AppColors.error.withValues(alpha: 0.3),
+                            width: 1,
                           ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              authVM.error!,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 13,
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.error_outline_rounded,
+                              color: AppColors.error,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                authVM.error!,
+                                style: TextStyle(
+                                  color: AppColors.error,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
-                          ),
-                          IconButton(
-                            icon: const Icon(
-                              Icons.close,
-                              color: Colors.white,
-                              size: 16,
+                            IconButton(
+                              icon: Icon(
+                                Icons.close_rounded,
+                                color: AppColors.error,
+                                size: 18,
+                              ),
+                              onPressed: authVM.clearError,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
                             ),
-                            onPressed: authVM.clearError,
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
                   ],
                   SocialLoginButton(
                     label: 'Continue with Google',
                     emoji: '🔵',
+                    svgPath: 'assets/icons/google_icon.svg',
                     labelColor: Colors.black87,
                     bgColor: Colors.white,
                     isLoading: authVM.isLoading,
@@ -227,7 +277,7 @@ class LoginScreen extends StatelessWidget {
                         : () => authVM.signInWithGoogle(),
                   ),
                   if (Platform.isIOS) ...[
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
                     SocialLoginButton(
                       label: 'Continue with Apple',
                       emoji: '🍎',
@@ -243,16 +293,29 @@ class LoginScreen extends StatelessWidget {
                   TextButton(
                     onPressed: authVM.isLoading
                         ? null
-                        : () => authVM.continueWithoutSignIn(),
+                        : () async {
+                            if (authVM.isLoggedIn && authVM.isAnonymous) {
+                              if (context.canPop()) {
+                                context.pop();
+                              } else {
+                                context.go('/explore');
+                              }
+                            } else {
+                              await authVM.continueWithoutSignIn();
+                            }
+                          },
                     style: TextButton.styleFrom(
                       foregroundColor: Colors.white.withValues(alpha: 0.85),
-                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                     ),
                     child: Text(
                       'Continue without signing in',
                       style: AppTextStyles.titleMedium.copyWith(
                         color: Colors.white.withValues(alpha: 0.9),
-                        decoration: TextDecoration.underline,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
@@ -262,16 +325,6 @@ class LoginScreen extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildTerms() {
-    return Text(
-      'By continuing you agree to our Terms of Service\nand Privacy Policy.',
-      style: AppTextStyles.labelSmall.copyWith(
-        color: Colors.white.withValues(alpha: 0.5),
-      ),
-      textAlign: TextAlign.center,
     );
   }
 }

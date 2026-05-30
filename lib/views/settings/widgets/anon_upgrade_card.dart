@@ -22,15 +22,31 @@ class _AnonUpgradeCardState extends State<AnonUpgradeCard> {
     super.initState();
     _pageController = PageController(initialPage: _currentPage);
     _timer = Timer.periodic(const Duration(seconds: 4), (timer) {
-      if (mounted) {
-        _currentPage++;
-        _pageController.animateToPage(
-          _currentPage,
-          duration: const Duration(milliseconds: 600),
-          curve: Curves.easeInOutCubic,
-        );
+      if (mounted && _pageController.hasClients) {
+        if (!_isWidgetOffstage()) {
+          _currentPage++;
+          _pageController.animateToPage(
+            _currentPage,
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.easeInOutCubic,
+          );
+        }
       }
     });
+  }
+
+  bool _isWidgetOffstage() {
+    if (!mounted) return true;
+    bool offstageDetected = false;
+    context.visitAncestorElements((element) {
+      final widget = element.widget;
+      if (widget is Offstage && widget.offstage) {
+        offstageDetected = true;
+        return false; // stop traversal
+      }
+      return true; // continue traversal
+    });
+    return offstageDetected;
   }
 
   @override
@@ -151,7 +167,7 @@ class _AnonUpgradeCardState extends State<AnonUpgradeCard> {
           ),
           const SizedBox(height: 24),
           ElevatedButton(
-            onPressed: () => context.push('/login'),
+            onPressed: () => context.push('/login?upgrade=true'),
             style: ElevatedButton.styleFrom(
               backgroundColor: colorScheme.primary,
               foregroundColor: Colors.white,

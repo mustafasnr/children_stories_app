@@ -2,9 +2,11 @@ import 'package:children_stories/core/services/toast_service.dart';
 import 'package:children_stories/viewmodels/auth_viewmodel.dart';
 import 'package:children_stories/views/auth/login_screen.dart';
 import 'package:children_stories/views/book_detail/book_detail_screen.dart';
-import 'package:children_stories/views/home/home_screen.dart';
+import 'package:children_stories/views/explore/explore_screen.dart';
+import 'package:children_stories/views/library/library_screen.dart';
+import 'package:children_stories/views/settings/settings_screen.dart';
+import 'package:children_stories/views/main/main_scaffold.dart';
 import 'package:children_stories/views/onboarding/onboarding_screen.dart';
-import 'package:children_stories/views/profile/profile_screen.dart';
 import 'package:children_stories/views/reader/reader_screen.dart';
 import 'package:go_router/go_router.dart';
 
@@ -14,7 +16,7 @@ class AppRouter {
   static GoRouter createRouter(AuthViewModel authViewModel) {
     return GoRouter(
       navigatorKey: ToastService.navigatorKey,
-      initialLocation: '/home',
+      initialLocation: '/explore',
       refreshListenable: authViewModel,
       redirect: (context, state) {
         final isInitialized = authViewModel.isInitialized;
@@ -48,7 +50,11 @@ class AppRouter {
 
         // 4. Bypass onboarding/login if fully set up
         if (isOnboarding || isLogin) {
-          return '/home';
+          final isUpgrade = state.uri.queryParameters['upgrade'] == 'true';
+          if (isLogin && authViewModel.isAnonymous && isUpgrade) {
+            return null; // Allow anonymous guests to upgrade their account
+          }
+          return '/explore';
         }
 
         return null;
@@ -64,10 +70,39 @@ class AppRouter {
           name: 'login',
           builder: (_, _) => const LoginScreen(),
         ),
-        GoRoute(
-          path: '/home',
-          name: 'home',
-          builder: (_, _) => const HomeScreen(),
+        StatefulShellRoute.indexedStack(
+          builder: (context, state, navigationShell) {
+            return MainScaffold(navigationShell: navigationShell);
+          },
+          branches: [
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/explore',
+                  name: 'explore',
+                  builder: (_, _) => const ExploreScreen(),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/library',
+                  name: 'library',
+                  builder: (_, _) => const LibraryScreen(),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/settings',
+                  name: 'settings',
+                  builder: (_, _) => const SettingsScreen(),
+                ),
+              ],
+            ),
+          ],
         ),
         GoRoute(
           path: '/book/:id',
@@ -80,11 +115,6 @@ class AppRouter {
           name: 'reader',
           builder: (_, state) =>
               ReaderScreen(bookId: state.pathParameters['id']!),
-        ),
-        GoRoute(
-          path: '/profile',
-          name: 'profile',
-          builder: (_, _) => const ProfileScreen(),
         ),
       ],
     );

@@ -168,7 +168,7 @@ class PremiumCard extends StatelessWidget {
                           ToastService.showInfo(
                             'Please sign in first to purchase Premium!',
                           );
-                          context.push('/login');
+                          context.push('/login?upgrade=true');
                         } else {
                           AdaptyService.showPaywall(context);
                         }
@@ -198,7 +198,7 @@ class PremiumCard extends StatelessWidget {
                     ToastService.showInfo(
                       'Please sign in first to purchase Premium!',
                     );
-                    context.push('/login');
+                    context.push('/login?upgrade=true');
                   } else {
                     AdaptyService.showPaywall(context);
                   }

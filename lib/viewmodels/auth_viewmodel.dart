@@ -1,6 +1,7 @@
 import 'package:children_stories/data/models/profile_model.dart';
 import 'package:children_stories/data/repositories/auth_repository.dart';
 import 'package:children_stories/data/repositories/profile_repository.dart';
+import 'package:children_stories/data/repositories/bookmark_repository.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -8,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class AuthViewModel extends ChangeNotifier {
   final AuthRepository _repository = AuthRepository();
   final ProfileRepository _profileRepository = ProfileRepository();
+  final BookmarkRepository _bookmarkRepository = BookmarkRepository();
 
   User? _currentUser;
   UserProfile? _profile;
@@ -160,12 +162,13 @@ class AuthViewModel extends ChangeNotifier {
       // 1. Store anonymous info first
       final anonymousAge = _profile?.childAge;
       final anonymousGender = _profile?.childGender;
+      final anonymousUid = _currentUser?.id;
 
       // 2. Perform native sign in
       await _repository.signInWithGoogle();
 
       // 3. Merge profiles
-      await _mergeAnonymousDataToNewUser(anonymousAge, anonymousGender);
+      await _mergeAnonymousDataToNewUser(anonymousUid, anonymousAge, anonymousGender);
     } catch (e) {
       _setError(_friendlyError(e));
     } finally {
@@ -180,12 +183,13 @@ class AuthViewModel extends ChangeNotifier {
       // 1. Store anonymous info first
       final anonymousAge = _profile?.childAge;
       final anonymousGender = _profile?.childGender;
+      final anonymousUid = _currentUser?.id;
 
       // 2. Perform native sign in
       await _repository.signInWithApple();
 
       // 3. Merge profiles
-      await _mergeAnonymousDataToNewUser(anonymousAge, anonymousGender);
+      await _mergeAnonymousDataToNewUser(anonymousUid, anonymousAge, anonymousGender);
     } catch (e) {
       _setError(_friendlyError(e));
     } finally {
@@ -193,7 +197,7 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> _mergeAnonymousDataToNewUser(int? anonAge, String? anonGender) async {
+  Future<void> _mergeAnonymousDataToNewUser(String? oldUid, int? anonAge, String? anonGender) async {
     final newUid = _currentUser?.id;
     if (newUid == null) return;
 
@@ -207,6 +211,11 @@ class AuthViewModel extends ChangeNotifier {
         await _profileRepository.updateChildInfo(newUid, age: mergedAge, gender: mergedGender);
       }
       
+      // Migrate bookmarks if they signed in anonymously first
+      if (oldUid != null && oldUid != newUid) {
+        await _bookmarkRepository.migrateBookmarks(oldUid, newUid);
+      }
+
       await _loadProfile(newUid);
       _hasFinishedAuthSelection = true;
       notifyListeners();

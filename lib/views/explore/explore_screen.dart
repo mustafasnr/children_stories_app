@@ -4,24 +4,23 @@ import 'package:children_stories/viewmodels/home_viewmodel.dart';
 import 'package:children_stories/viewmodels/auth_viewmodel.dart';
 import 'package:children_stories/viewmodels/subscription_viewmodel.dart';
 import 'package:children_stories/l10n/app_localizations.dart';
-import 'package:children_stories/views/home/widgets/book_card.dart';
-import 'package:children_stories/views/home/widgets/category_chip_row.dart';
-import 'package:children_stories/views/home/widgets/featured_book_card.dart';
-import 'package:children_stories/views/home/widgets/language_bottom_sheet.dart';
+import 'package:children_stories/views/explore/widgets/book_card.dart';
+import 'package:children_stories/views/explore/widgets/category_chip_row.dart';
+import 'package:children_stories/views/explore/widgets/featured_book_card.dart';
+import 'package:children_stories/views/explore/widgets/story_language_bottom_sheet.dart';
 import 'package:country_flags/country_flags.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+class ExploreScreen extends StatefulWidget {
+  const ExploreScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<ExploreScreen> createState() => _ExploreScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _ExploreScreenState extends State<ExploreScreen> {
   @override
   void initState() {
     super.initState();
@@ -59,7 +58,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     if (vm.selectedLanguage != null)
                       TextButton.icon(
                         onPressed: () {
-                          LanguageBottomSheet.show(
+                          StoryLanguageBottomSheet.show(
                             context,
                             languages: vm.languages,
                             selectedIndex: vm.selectedLanguageIndex,
@@ -81,15 +80,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           visualDensity: VisualDensity.compact,
                         ),
                       ),
-                    IconButton(
-                      icon: Icon(
-                        Icons.manage_accounts_rounded,
-                        color: Theme.of(context).colorScheme.onSurface,
-                        size: 26,
-                      ),
-                      onPressed: () => context.push('/profile'),
-                    ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 16),
                   ],
                 ),
                 if (vm.isLoading) ...[
@@ -185,63 +176,135 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildShimmer(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final baseColor = isDark ? Colors.grey[800]! : Colors.grey[200]!;
-    final highlightColor = isDark ? Colors.grey[700]! : Colors.grey[50]!;
-    final cardColor = isDark ? Colors.grey[850]! : Colors.white;
+    final baseColor = isDark
+        ? const Color(0xFF3D3853)
+        : const Color(0xFFE8E0F0);
+    final highlightColor = isDark
+        ? const Color(0xFF4D4866)
+        : const Color(0xFFF5F0FF);
+    final blockColor = isDark ? const Color(0xFF4A4460) : Colors.white;
 
     return Shimmer.fromColors(
       baseColor: baseColor,
       highlightColor: highlightColor,
-      child: Column(
-        children: [
-          Container(
-            margin: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-            height: 200,
-            decoration: BoxDecoration(
-              color: cardColor,
-              borderRadius: BorderRadius.circular(24),
-            ),
-          ),
-          ...List.generate(
-            3,
-            (_) => Container(
-              margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-              height: 120,
-              decoration: BoxDecoration(
-                color: cardColor,
-                borderRadius: BorderRadius.circular(20),
+      child: SingleChildScrollView(
+        physics: const NeverScrollableScrollPhysics(),
+        child: Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Section label placeholder
+              Container(
+                margin: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+                height: 16,
+                width: 100,
+                decoration: BoxDecoration(
+                  color: blockColor,
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
-            ),
+              // Featured card placeholder
+              Container(
+                margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                height: 200,
+                decoration: BoxDecoration(
+                  color: blockColor,
+                  borderRadius: BorderRadius.circular(24),
+                ),
+              ),
+              // Category chips placeholder
+              Padding(
+                padding: const EdgeInsets.only(left: 20, bottom: 20),
+                child: Row(
+                  children: List.generate(
+                    4,
+                    (i) => Container(
+                      margin: EdgeInsets.only(right: i < 3 ? 10 : 0),
+                      width: 70 + (i % 2) * 20,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: blockColor,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              // Section label placeholder
+              Container(
+                margin: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                height: 16,
+                width: 120,
+                decoration: BoxDecoration(
+                  color: blockColor,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              // Book list item placeholders
+              ...List.generate(
+                4,
+                (_) => Container(
+                  margin: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                  height: 110,
+                  decoration: BoxDecoration(
+                    color: blockColor,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildError(HomeViewModel vm) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('😕', style: TextStyle(fontSize: 56)),
-            const SizedBox(height: 16),
+            Container(
+              width: 88,
+              height: 88,
+              decoration: BoxDecoration(
+                color: colorScheme.errorContainer,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.wifi_off_rounded,
+                size: 42,
+                color: colorScheme.onErrorContainer,
+              ),
+            ),
+            const SizedBox(height: 24),
             Text(
-              'Something went wrong',
-              style: AppTextStyles.headlineSmall,
+              'Oops! Something went wrong',
+              style: AppTextStyles.headlineMedium,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Text(
-              vm.error ?? '',
+              vm.error ??
+                  'We couldn\'t load the stories. Please check your connection and try again.',
               style: AppTextStyles.bodyMedium,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 24),
-            ElevatedButton(
+            const SizedBox(height: 32),
+            FilledButton.icon(
               onPressed: vm.refresh,
-              child: const Text('Try Again'),
+              icon: const Icon(Icons.refresh_rounded, size: 20),
+              label: const Text('Try Again'),
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 28,
+                  vertical: 14,
+                ),
+              ),
             ),
           ],
         ),
@@ -268,25 +331,40 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildEmpty(AppLocalizations localizations) {
-    return Padding(
-      padding: const EdgeInsets.all(40),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text('📭', style: TextStyle(fontSize: 48)),
-          const SizedBox(height: 12),
-          Text(
-            localizations.no_stories_yet,
-            style: AppTextStyles.headlineSmall,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            localizations.stories_coming_soon,
-            style: AppTextStyles.bodyMedium,
-            textAlign: TextAlign.center,
-          ),
-        ],
+    final colorScheme = Theme.of(context).colorScheme;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 48),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 88,
+              height: 88,
+              decoration: BoxDecoration(
+                color: colorScheme.secondaryContainer,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.auto_stories_rounded,
+                size: 44,
+                color: colorScheme.onSecondaryContainer,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              localizations.no_stories_yet,
+              style: AppTextStyles.headlineMedium,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              localizations.stories_coming_soon,
+              style: AppTextStyles.bodyMedium,
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -4,7 +4,7 @@ import 'package:children_stories/viewmodels/auth_viewmodel.dart';
 import 'package:children_stories/viewmodels/subscription_viewmodel.dart';
 import 'package:children_stories/viewmodels/theme_viewmodel.dart';
 import 'package:children_stories/core/services/toast_service.dart';
-import 'package:children_stories/l10n/app_localizations.dart';
+import 'package:children_stories/views/settings/widgets/app_language_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -17,7 +17,6 @@ class SettingsSection extends StatelessWidget {
     final authVM = context.read<AuthViewModel>();
     final subVM = context.watch<SubscriptionViewModel>();
     final themeVM = context.watch<ThemeViewModel>();
-    final localizations = AppLocalizations.of(context)!;
     final isAnonymous = authVM.isAnonymous;
 
     return Column(
@@ -63,32 +62,7 @@ class SettingsSection extends StatelessWidget {
           },
         ),
         const SizedBox(height: 12),
-        _buildTile(
-          context: context,
-          icon: Icons.language_rounded,
-          title: localizations.app_language,
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'EN',
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(width: 4),
-              Icon(
-                Icons.chevron_right_rounded,
-                color: AppColors.textHint,
-                size: 20,
-              ),
-            ],
-          ),
-          onTap: () {
-            ToastService.showInfo('Other languages coming soon!');
-          },
-        ),
+        AppLanguageSelector(),
         if (!isAnonymous) ...[
           const SizedBox(height: 12),
           _buildTile(

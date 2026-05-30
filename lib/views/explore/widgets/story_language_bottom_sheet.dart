@@ -5,12 +5,12 @@ import 'package:children_stories/data/models/language_model.dart';
 import 'package:country_flags/country_flags.dart';
 import 'package:flutter/material.dart';
 
-class LanguageBottomSheet extends StatelessWidget {
+class StoryLanguageBottomSheet extends StatelessWidget {
   final List<Language> languages;
   final int selectedIndex;
   final ValueChanged<int> onSelected;
 
-  const LanguageBottomSheet({
+  const StoryLanguageBottomSheet({
     super.key,
     required this.languages,
     required this.selectedIndex,
@@ -27,7 +27,7 @@ class LanguageBottomSheet extends StatelessWidget {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (context) => LanguageBottomSheet(
+      builder: (context) => StoryLanguageBottomSheet(
         languages: languages,
         selectedIndex: selectedIndex,
         onSelected: onSelected,
@@ -81,12 +81,16 @@ class LanguageBottomSheet extends StatelessWidget {
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     decoration: BoxDecoration(
-                      color: isSelected ? AppColors.surfaceVariant : AppColors.surface,
+                      color: isSelected
+                          ? AppColors.surfaceVariant
+                          : AppColors.surface,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
                         color: isSelected
                             ? AppColors.primary
-                            : (isDark ? Colors.white.withValues(alpha: 0.12) : Colors.grey.shade200),
+                            : (isDark
+                                  ? Colors.white.withValues(alpha: 0.2)
+                                  : Colors.grey.shade300),
                         width: 2,
                       ),
                       boxShadow: [
@@ -109,8 +113,16 @@ class LanguageBottomSheet extends StatelessWidget {
                           Navigator.pop(context);
                         },
                         borderRadius: BorderRadius.circular(18),
-                        splashColor: AppColors.primary.withValues(alpha: 0.1),
-                        highlightColor: AppColors.primary.withValues(alpha: 0.05),
+                        splashColor: isSelected
+                            ? AppColors.primary.withValues(alpha: 0.1)
+                            : (isDark
+                                ? Colors.white.withValues(alpha: 0.06)
+                                : Colors.black.withValues(alpha: 0.04)),
+                        highlightColor: isSelected
+                            ? AppColors.primary.withValues(alpha: 0.05)
+                            : (isDark
+                                ? Colors.white.withValues(alpha: 0.03)
+                                : Colors.black.withValues(alpha: 0.02)),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 20,
@@ -147,18 +159,25 @@ class LanguageBottomSheet extends StatelessWidget {
                                       ),
                                       decoration: BoxDecoration(
                                         color: isSelected
-                                            ? AppColors.primary.withValues(alpha: 0.15)
-                                            : (isDark ? Colors.white.withValues(alpha: 0.08) : AppColors.surfaceVariant),
+                                            ? AppColors.primary.withValues(
+                                                alpha: 0.15,
+                                              )
+                                            : (isDark
+                                                  ? Colors.white.withValues(
+                                                      alpha: 0.08,
+                                                    )
+                                                  : AppColors.surfaceVariant),
                                         borderRadius: BorderRadius.circular(10),
                                       ),
                                       child: Text(
                                         '${lang.storyCount} Stories',
-                                        style: AppTextStyles.labelSmall.copyWith(
-                                          color: isSelected
-                                              ? AppColors.primary
-                                              : AppColors.textSecondary,
-                                          fontWeight: FontWeight.w800,
-                                        ),
+                                        style: AppTextStyles.labelSmall
+                                            .copyWith(
+                                              color: isSelected
+                                                  ? AppColors.primary
+                                                  : AppColors.textSecondary,
+                                              fontWeight: FontWeight.w800,
+                                            ),
                                       ),
                                     ),
                                   ],
@@ -170,7 +189,9 @@ class LanguageBottomSheet extends StatelessWidget {
                                     : AppIcons.checkCircleRegular,
                                 color: isSelected
                                     ? AppColors.primary
-                                    : (isDark ? Colors.white.withValues(alpha: 0.25) : Colors.grey.shade400),
+                                    : (isDark
+                                          ? Colors.white.withValues(alpha: 0.25)
+                                          : Colors.grey.shade400),
                                 size: 26,
                               ),
                             ],
