@@ -21,6 +21,10 @@ class HomeViewModel extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
 
+  int _currentPage = 0;
+  bool _isLoadMoreRunning = false;
+  bool _hasMore = true;
+
   List<Language> get languages => _languages;
   
   Language? get selectedLanguage =>
@@ -48,6 +52,8 @@ class HomeViewModel extends ChangeNotifier {
   int? get selectedCategoryId => _selectedCategoryId;
   bool get isLoading => _isLoading;
   String? get error => _error;
+  bool get isLoadMoreRunning => _isLoadMoreRunning;
+  bool get hasMore => _hasMore;
 
   Future<void> initialize({int? childAge}) async {
     _childAge = childAge;
@@ -116,6 +122,8 @@ class HomeViewModel extends ChangeNotifier {
   Future<void> selectCategory(int? categoryId) async {
     if (_selectedCategoryId == categoryId) return;
     _selectedCategoryId = categoryId;
+    _currentPage = 0;
+    _hasMore = true;
     notifyListeners();
     final lang = selectedLanguage;
     if (lang != null) {
@@ -123,7 +131,12 @@ class HomeViewModel extends ChangeNotifier {
         lang.code,
         categoryId: categoryId,
         childAge: _childAge,
+        limit: 10,
+        offset: 0,
       );
+      if ((_cachedBooks[lang.code]?.length ?? 0) < 10) {
+        _hasMore = false;
+      }
       notifyListeners();
     }
   }
@@ -146,6 +159,8 @@ class HomeViewModel extends ChangeNotifier {
         notifyListeners();
       }
       
+      _currentPage = 0;
+      _hasMore = true;
       try {
         final results = await Future.wait([
           _repository.getCategoriesByLanguage(code),
@@ -153,6 +168,8 @@ class HomeViewModel extends ChangeNotifier {
             code,
             categoryId: _selectedCategoryId,
             childAge: _childAge,
+            limit: 10,
+            offset: 0,
           ),
           _repository.getFeaturedBooks(code, childAge: _childAge),
         ]);
@@ -161,6 +178,10 @@ class HomeViewModel extends ChangeNotifier {
         _cachedBooks[code] = results[1] as List<Book>;
         _cachedFeaturedBooks[code] = results[2] as List<Book>;
         _error = null;
+
+        if ((results[1] as List).length < 10) {
+          _hasMore = false;
+        }
       } catch (e) {
         _error = 'Failed to load content. Pull to refresh.';
         debugPrint('[HomeVM] refreshAll error: $e');
@@ -169,6 +190,46 @@ class HomeViewModel extends ChangeNotifier {
       if (!hasData) {
         _isLoading = false;
       }
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadNextPage() async {
+    if (_isLoading || _isLoadMoreRunning || !_hasMore) return;
+
+    final lang = selectedLanguage;
+    if (lang == null) return;
+
+    _isLoadMoreRunning = true;
+    notifyListeners();
+
+    try {
+      final code = lang.code;
+      final nextPage = _currentPage + 1;
+      final offset = nextPage * 10;
+
+      final newBooks = await _repository.getBooksByLanguage(
+        code,
+        categoryId: _selectedCategoryId,
+        childAge: _childAge,
+        limit: 10,
+        offset: offset,
+      );
+
+      if (newBooks.isEmpty) {
+        _hasMore = false;
+      } else {
+        _currentPage = nextPage;
+        if (newBooks.length < 10) {
+          _hasMore = false;
+        }
+        final currentList = _cachedBooks[code] ?? [];
+        _cachedBooks[code] = [...currentList, ...newBooks];
+      }
+    } catch (e) {
+      debugPrint('[HomeVM] loadNextPage error: $e');
+    } finally {
+      _isLoadMoreRunning = false;
       notifyListeners();
     }
   }

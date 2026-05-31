@@ -14,6 +14,11 @@ class AppIcons {
   static IconData get checkCircleRegular => PhosphorIconsRegular.checkCircle;
   static IconData get info => PhosphorIconsRegular.info;
 
+  // Toast Status Icons
+  static IconData get toastSuccess => PhosphorIconsBold.checkCircle;
+  static IconData get toastError => PhosphorIconsBold.warningCircle;
+  static IconData get toastInfo => PhosphorIconsBold.info;
+
   // Gender Icons
   static IconData get genderFemale => PhosphorIconsBold.genderFemale;
   static IconData get genderMale => PhosphorIconsBold.genderMale;

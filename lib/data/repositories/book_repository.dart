@@ -36,18 +36,23 @@ class BookRepository {
     String languageCode, {
     int? categoryId,
     int? childAge,
+    int limit = 10,
+    int offset = 0,
   }) async {
     var query = _client
         .from(SupabaseConstants.booksTable)
         .select('*, book_translations!inner(title, description)')
-        .eq('book_translations.language_code', languageCode);
+        .eq('book_translations.language_code', languageCode)
+        .eq('is_featured', false);
     if (categoryId != null) {
       query = query.eq('category_id', categoryId);
     }
     if (childAge != null) {
       query = query.lte('age_min', childAge).gte('age_max', childAge);
     }
-    final data = await query.order('created_at', ascending: false);
+    final data = await query
+        .order('created_at', ascending: false)
+        .range(offset, offset + limit - 1);
     return (data as List).map((e) => Book.fromJson(e)).toList();
   }
 
@@ -60,7 +65,7 @@ class BookRepository {
     if (childAge != null) {
       query = query.lte('age_min', childAge).gte('age_max', childAge);
     }
-    final data = await query;
+    final data = await query.limit(5);
     return (data as List).map((e) => Book.fromJson(e)).toList();
   }
 

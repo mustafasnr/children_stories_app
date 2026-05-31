@@ -12,6 +12,7 @@ import 'package:children_stories/views/settings/widgets/premium_card.dart';
 import 'package:children_stories/views/settings/widgets/settings_section.dart';
 import 'package:children_stories/views/settings/widgets/user_header.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -48,7 +49,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Consumer<ProfileViewModel>(
         builder: (context, vm, _) {
           final authVM = context.read<AuthViewModel>();
+          final subVM = context.watch<SubscriptionViewModel>();
           final isAnonymous = authVM.isAnonymous;
+          final isPremium = subVM.isPremium;
           final user = authVM.currentUser;
           final profile = vm.profile;
           final avatarUrl =
@@ -94,10 +97,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
                   // Premium status card
                   const PremiumCard(),
-                  const SizedBox(height: 12),
-
-                  // Subscription Card (moved here)
-                  _buildSubscriptionCard(context, isAnonymous),
+                  if (isPremium) ...[
+                    const SizedBox(height: 12),
+                    // Subscription Card (moved here)
+                    _buildSubscriptionCard(context, isAnonymous),
+                  ],
                   const SizedBox(height: 24),
 
                   Divider(
@@ -167,7 +171,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           onTap: () {
             if (isAnonymous) {
-              ToastService.showInfo('Please sign in to access subscriptions');
+              ToastService.showInfo(
+                'Please sign in to access subscriptions',
+                onTap: () {
+                  context.push('/login?upgrade=true');
+                },
+              );
             } else {
               AdaptyService.showPaywall(context);
             }

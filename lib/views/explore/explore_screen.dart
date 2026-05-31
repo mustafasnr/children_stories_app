@@ -21,14 +21,30 @@ class ExploreScreen extends StatefulWidget {
 }
 
 class _ExploreScreenState extends State<ExploreScreen> {
+  final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final childAge = context.read<AuthViewModel>().profile?.childAge;
       context.read<HomeViewModel>().initialize(childAge: childAge);
       context.read<SubscriptionViewModel>().checkSubscriptionStatus();
     });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      context.read<HomeViewModel>().loadNextPage();
+    }
   }
 
   @override
@@ -41,6 +57,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
             color: Theme.of(context).colorScheme.primary,
             onRefresh: vm.refresh,
             child: CustomScrollView(
+              controller: _scrollController,
               slivers: [
                 SliverAppBar(
                   backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -157,13 +174,23 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   // Book list
                   if (vm.books.isEmpty)
                     SliverToBoxAdapter(child: _buildEmpty(localizations))
-                  else
+                  else ...[
                     SliverList(
                       delegate: SliverChildBuilderDelegate(
                         (_, i) => BookCard(book: vm.books[i]),
                         childCount: vm.books.length,
                       ),
                     ),
+                    if (vm.isLoadMoreRunning)
+                      const SliverToBoxAdapter(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 24),
+                          child: Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                        ),
+                      ),
+                  ],
                   const SliverPadding(padding: EdgeInsets.only(bottom: 100)),
                 ],
               ],

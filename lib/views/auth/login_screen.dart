@@ -1,6 +1,6 @@
-import 'package:children_stories/app/theme/app_colors.dart';
 import 'package:children_stories/app/theme/app_text_styles.dart';
 import 'package:children_stories/viewmodels/auth_viewmodel.dart';
+import 'package:children_stories/core/services/toast_service.dart';
 import 'package:children_stories/views/auth/widgets/social_login_button.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -178,8 +178,16 @@ class _LoginCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final isUpgrade =
+        GoRouterState.of(context).uri.queryParameters['upgrade'] == 'true';
     return Consumer<AuthViewModel>(
       builder: (context, authVM, _) {
+        if (authVM.error != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            ToastService.showError(authVM.error!);
+            authVM.clearError();
+          });
+        }
         return ClipRRect(
           borderRadius: BorderRadius.circular(28),
           child: BackdropFilter(
@@ -215,56 +223,6 @@ class _LoginCard extends StatelessWidget {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 24),
-                  if (authVM.error != null) ...[
-                    SizedBox(
-                      width: double.infinity,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.error.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: AppColors.error.withValues(alpha: 0.3),
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.error_outline_rounded,
-                              color: AppColors.error,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                authVM.error!,
-                                style: TextStyle(
-                                  color: AppColors.error,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                            IconButton(
-                              icon: Icon(
-                                Icons.close_rounded,
-                                color: AppColors.error,
-                                size: 18,
-                              ),
-                              onPressed: authVM.clearError,
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
                   SocialLoginButton(
                     label: 'Continue with Google',
                     emoji: '🔵',
@@ -312,7 +270,7 @@ class _LoginCard extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      'Continue without signing in',
+                      isUpgrade ? 'Not Now' : 'Continue without signing in',
                       style: AppTextStyles.titleMedium.copyWith(
                         color: Colors.white.withValues(alpha: 0.9),
                         fontWeight: FontWeight.w700,

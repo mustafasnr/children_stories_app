@@ -101,15 +101,33 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                         final isBookmarked = vm.isBookmarked;
 
                         return GestureDetector(
-                          onTap: () {
+                          onTap: () async {
                             if (authVM.isAnonymous) {
                               ToastService.showInfo(
                                 'Please sign in to bookmark stories',
+                                onTap: () {
+                                  context.push('/login?upgrade=true');
+                                },
                               );
                             } else {
                               final userId = authVM.currentUser?.id;
                               if (userId != null) {
-                                vm.toggleBookmark(userId);
+                                final wasBookmarked = vm.isBookmarked;
+                                await vm.toggleBookmark(userId);
+                                if (mounted) {
+                                  if (!wasBookmarked) {
+                                    ToastService.showSuccess(
+                                      'Added to library!',
+                                      onTap: () {
+                                        context.go('/library');
+                                      },
+                                    );
+                                  } else {
+                                    ToastService.showInfo(
+                                      'Removed from library',
+                                    );
+                                  }
+                                }
                               }
                             }
                           },

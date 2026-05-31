@@ -3,6 +3,7 @@ import 'package:children_stories/app/theme/app_text_styles.dart';
 import 'package:children_stories/data/models/category_model.dart';
 import 'package:children_stories/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class CategoryChipRow extends StatelessWidget {
   final List<Category> categories;
@@ -36,18 +37,31 @@ class CategoryChipRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const knownSlugs = [
+      'all-stories',
+      'fairy-tales',
+      'adventure',
+      'animals',
+      'fantasy',
+    ];
+
+    final sortedCategories = List<Category>.from(categories)
+      ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+
     return SizedBox(
       height: 38,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 20),
-        itemCount: categories.length,
+        itemCount: sortedCategories.length,
         separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (_, index) {
-          final cat = categories[index];
+          final cat = sortedCategories[index];
           // index 0 = "All" → categoryId null
           final catId = index == 0 ? null : cat.id;
           final isSelected = selectedCategoryId == catId;
+          final hasIcon = knownSlugs.contains(cat.slug);
+
           return AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             decoration: BoxDecoration(
@@ -78,8 +92,14 @@ class CategoryChipRow extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(cat.icon, style: const TextStyle(fontSize: 13)),
-                      const SizedBox(width: 5),
+                      if (hasIcon) ...[
+                        SvgPicture.asset(
+                          'assets/categories/${cat.slug}.svg',
+                          width: 15,
+                          height: 15,
+                        ),
+                        const SizedBox(width: 6),
+                      ],
                       Text(
                         _translateCategory(context, cat),
                         style: AppTextStyles.labelMedium.copyWith(

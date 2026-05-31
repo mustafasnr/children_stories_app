@@ -2,14 +2,12 @@ class Category {
   final int id;
   final String slug;
   final String name;
-  final String icon;
   final int sortOrder;
 
   const Category({
     required this.id,
     required this.slug,
     required this.name,
-    this.icon = '📖',
     this.sortOrder = 0,
   });
 
@@ -31,7 +29,6 @@ class Category {
       id: json['id'] as int,
       slug: json['slug'] as String? ?? '',
       name: name,
-      icon: json['icon'] as String? ?? '📖',
       sortOrder: json['sort_order'] as int? ?? 0,
     );
   }
