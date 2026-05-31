@@ -22,6 +22,9 @@ class AppRouter {
         final isInitialized = authViewModel.isInitialized;
         if (!isInitialized) return null; // Wait for initial auth setup
 
+        // Don't redirect during active sign-in to prevent flicker
+        if (authViewModel.isLoading) return null;
+
         final hasCompletedOnboarding = authViewModel.hasCompletedOnboarding;
         final isLoggedIn = authViewModel.isLoggedIn;
         final hasFinishedAuthSelection = authViewModel.hasFinishedAuthSelection;
@@ -51,8 +54,8 @@ class AppRouter {
         // 4. Bypass onboarding/login if fully set up
         if (isOnboarding || isLogin) {
           final isUpgrade = state.uri.queryParameters['upgrade'] == 'true';
-          if (isLogin && authViewModel.isAnonymous && isUpgrade) {
-            return null; // Allow anonymous guests to upgrade their account
+          if (isLogin && isUpgrade && authViewModel.isAnonymous) {
+            return null; // Allow upgrading users to proceed or pop manually back to Settings
           }
           return '/explore';
         }

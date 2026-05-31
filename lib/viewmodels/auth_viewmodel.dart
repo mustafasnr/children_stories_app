@@ -43,9 +43,11 @@ class AuthViewModel extends ChangeNotifier {
 
   Future<void> _initializeAuth() async {
     _repository.authStateStream.listen((event) async {
-      final user = event.session?.user;
+      final user = Supabase.instance.client.auth.currentUser;
+      final isAnonymousChanged = user?.isAnonymous != _currentUser?.isAnonymous;
+      final isIdChanged = user?.id != _currentUser?.id;
       
-      if (user?.id != _currentUser?.id) {
+      if (isIdChanged || isAnonymousChanged) {
         _currentUser = user;
         if (user != null) {
           await _loadProfile(user.id);
@@ -190,6 +192,60 @@ class AuthViewModel extends ChangeNotifier {
 
       // 3. Merge profiles
       await _mergeAnonymousDataToNewUser(anonymousUid, anonymousAge, anonymousGender);
+    } catch (e) {
+      _setError(_friendlyError(e));
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<void> linkGoogle() async {
+    _setLoading(true);
+    _clearError();
+    try {
+      await _repository.linkGoogle();
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user != null) {
+        _currentUser = user;
+        await _loadProfile(user.id);
+        if (!user.isAnonymous) {
+          _hasFinishedAuthSelection = true;
+        }
+      }
+    } on AuthException catch (e) {
+      if (e.code == 'identity_already_exists') {
+        debugPrint('[AuthVM] Google identity already exists, falling back to sign-in');
+        await signInWithGoogle();
+      } else {
+        _setError(_friendlyError(e));
+      }
+    } catch (e) {
+      _setError(_friendlyError(e));
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<void> linkApple() async {
+    _setLoading(true);
+    _clearError();
+    try {
+      await _repository.linkApple();
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user != null) {
+        _currentUser = user;
+        await _loadProfile(user.id);
+        if (!user.isAnonymous) {
+          _hasFinishedAuthSelection = true;
+        }
+      }
+    } on AuthException catch (e) {
+      if (e.code == 'identity_already_exists') {
+        debugPrint('[AuthVM] Apple identity already exists, falling back to sign-in');
+        await signInWithApple();
+      } else {
+        _setError(_friendlyError(e));
+      }
     } catch (e) {
       _setError(_friendlyError(e));
     } finally {

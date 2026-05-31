@@ -418,7 +418,12 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
             if (canRead) {
               context.push('/reader/${book.id}');
             } else {
-              AdaptyService.showPaywall(context);
+              final authVM = context.read<AuthViewModel>();
+              if (authVM.isAnonymous) {
+                context.push('/login?upgrade=true');
+              } else {
+                AdaptyService.showPaywall(context);
+              }
             }
           },
           child: Container(
@@ -468,7 +473,12 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
               if (subVM.isPremium) {
                 context.push('/reader/${book.id}');
               } else {
-                AdaptyService.showPaywall(context);
+                final authVM = context.read<AuthViewModel>();
+                if (authVM.isAnonymous) {
+                  context.push('/login?upgrade=true');
+                } else {
+                  AdaptyService.showPaywall(context);
+                }
               }
             },
             child: Container(

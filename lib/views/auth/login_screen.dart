@@ -1,3 +1,4 @@
+import 'package:children_stories/app/app.dart';
 import 'package:children_stories/app/theme/app_text_styles.dart';
 import 'package:children_stories/viewmodels/auth_viewmodel.dart';
 import 'package:children_stories/core/services/toast_service.dart';
@@ -232,7 +233,17 @@ class _LoginCard extends StatelessWidget {
                     isLoading: authVM.isLoading,
                     onTap: authVM.isLoading
                         ? null
-                        : () => authVM.signInWithGoogle(),
+                        : () async {
+                            if (authVM.isLoggedIn && authVM.isAnonymous) {
+                              await authVM.linkGoogle();
+                            } else {
+                              await authVM.signInWithGoogle();
+                            }
+                            if (!context.mounted) return;
+                            if (isUpgrade && !authVM.isAnonymous && authVM.error == null) {
+                              RestartWidget.restartApp(context);
+                            }
+                          },
                   ),
                   if (Platform.isIOS) ...[
                     const SizedBox(height: 16),
@@ -244,7 +255,17 @@ class _LoginCard extends StatelessWidget {
                       isLoading: authVM.isLoading,
                       onTap: authVM.isLoading
                           ? null
-                          : () => authVM.signInWithApple(),
+                          : () async {
+                              if (authVM.isLoggedIn && authVM.isAnonymous) {
+                                await authVM.linkApple();
+                              } else {
+                                await authVM.signInWithApple();
+                              }
+                              if (!context.mounted) return;
+                              if (isUpgrade && !authVM.isAnonymous && authVM.error == null) {
+                                RestartWidget.restartApp(context);
+                              }
+                            },
                     ),
                   ],
                   const SizedBox(height: 16),

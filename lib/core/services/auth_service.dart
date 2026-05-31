@@ -52,6 +52,33 @@ class AuthService {
     if (uid != null) await AdaptyService.identify(uid);
   }
 
+  static Future<void> linkGoogle() async {
+    await _ensureGoogleSignInInitialized();
+    final googleUser = await _googleSignIn.authenticate();
+
+    final googleAuth = googleUser.authentication;
+    final idToken = googleAuth.idToken;
+    if (idToken == null) throw Exception('No ID token received from Google');
+
+    await _client.auth.linkIdentityWithIdToken(
+      provider: OAuthProvider.google,
+      idToken: idToken,
+    );
+
+    // Sync Google user profile data
+    await _client.auth.updateUser(
+      UserAttributes(
+        data: {
+          'full_name': googleUser.displayName,
+          'avatar_url': googleUser.photoUrl,
+        },
+      ),
+    );
+
+    // Refresh session to apply JWT changes immediately
+    await _client.auth.refreshSession();
+  }
+
   static Future<void> signInWithApple() async {
     final rawNonce = _generateNonce();
     final nonce = _sha256ofString(rawNonce);
@@ -75,6 +102,45 @@ class AuthService {
 
     final uid = _client.auth.currentUser?.id;
     if (uid != null) await AdaptyService.identify(uid);
+  }
+
+  static Future<void> linkApple() async {
+    final rawNonce = _generateNonce();
+    final nonce = _sha256ofString(rawNonce);
+
+    final credential = await SignInWithApple.getAppleIDCredential(
+      scopes: [
+        AppleIDAuthorizationScopes.email,
+        AppleIDAuthorizationScopes.fullName,
+      ],
+      nonce: nonce,
+    );
+
+    final idToken = credential.identityToken;
+    if (idToken == null) throw Exception('No ID token received from Apple');
+
+    await _client.auth.linkIdentityWithIdToken(
+      provider: OAuthProvider.apple,
+      idToken: idToken,
+      nonce: rawNonce,
+    );
+
+    final fullName = [credential.givenName, credential.familyName]
+        .where((s) => s != null && s.isNotEmpty)
+        .join(' ');
+
+    if (fullName.isNotEmpty) {
+      await _client.auth.updateUser(
+        UserAttributes(
+          data: {
+            'full_name': fullName,
+          },
+        ),
+      );
+    }
+
+    // Refresh session to apply JWT changes immediately
+    await _client.auth.refreshSession();
   }
 
   static Future<void> signOut() async {

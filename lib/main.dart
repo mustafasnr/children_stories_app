@@ -41,5 +41,9 @@ Future<void> main() async {
     debugPrint('[Adapty] init skipped: $e');
   }
 
-  runApp(const ChildrenStoriesApp());
+  runApp(
+    const RestartWidget(
+      child: ChildrenStoriesApp(),
+    ),
+  );
 }
