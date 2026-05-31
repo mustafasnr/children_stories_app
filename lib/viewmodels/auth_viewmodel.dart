@@ -1,7 +1,8 @@
+import 'dart:async';
+import 'package:children_stories/core/services/adapty_service.dart';
 import 'package:children_stories/data/models/profile_model.dart';
 import 'package:children_stories/data/repositories/auth_repository.dart';
 import 'package:children_stories/data/repositories/profile_repository.dart';
-import 'package:children_stories/data/repositories/bookmark_repository.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -9,7 +10,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class AuthViewModel extends ChangeNotifier {
   final AuthRepository _repository = AuthRepository();
   final ProfileRepository _profileRepository = ProfileRepository();
-  final BookmarkRepository _bookmarkRepository = BookmarkRepository();
 
   User? _currentUser;
   UserProfile? _profile;
@@ -17,6 +17,8 @@ class AuthViewModel extends ChangeNotifier {
   String? _error;
   bool _hasFinishedAuthSelection = false;
   bool _isInitialized = false;
+  StreamSubscription<AuthState>? _authSubscription;
+  bool _isDisposed = false;
 
   bool _localOnboardingCompleted = false;
   int? _localAge;
@@ -42,7 +44,8 @@ class AuthViewModel extends ChangeNotifier {
   }
 
   Future<void> _initializeAuth() async {
-    _repository.authStateStream.listen((event) async {
+    await _authSubscription?.cancel();
+    _authSubscription = _repository.authStateStream.listen((event) async {
       final user = Supabase.instance.client.auth.currentUser;
       final isAnonymousChanged = user?.isAnonymous != _currentUser?.isAnonymous;
       final isIdChanged = user?.id != _currentUser?.id;
@@ -53,9 +56,13 @@ class AuthViewModel extends ChangeNotifier {
           await _loadProfile(user.id);
           if (!user.isAnonymous) {
             _hasFinishedAuthSelection = true;
+            await AdaptyService.identify(user.id);
+          } else {
+            await AdaptyService.logout();
           }
         } else {
           _profile = null;
+          await AdaptyService.logout();
         }
         notifyListeners();
       }
@@ -72,6 +79,13 @@ class AuthViewModel extends ChangeNotifier {
         if (_profile?.childAge != null) {
           _hasFinishedAuthSelection = true;
         }
+        if (!_currentUser!.isAnonymous) {
+          await AdaptyService.identify(_currentUser!.id);
+        } else {
+          await AdaptyService.logout();
+        }
+      } else {
+        await AdaptyService.logout();
       }
     } catch (e) {
       debugPrint('[AuthVM] initialization error: $e');
@@ -89,15 +103,17 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> signInAnonymously() async {
-    _setLoading(true);
-    _clearError();
+  Future<void> _syncLocalOnboardingToProfile(String userId) async {
     try {
-      await _repository.signInAnonymously();
+      final currentProfile = await _profileRepository.getProfile(userId);
+      final age = currentProfile?.childAge ?? _localAge;
+      final gender = currentProfile?.childGender ?? _localGender;
+      if (age != null || gender != null) {
+        await _profileRepository.updateChildInfo(userId, age: age, gender: gender);
+      }
+      await _loadProfile(userId);
     } catch (e) {
-      _setError(_friendlyError(e));
-    } finally {
-      _setLoading(false);
+      debugPrint('[AuthVM] _syncLocalOnboardingToProfile error: $e');
     }
   }
 
@@ -136,6 +152,18 @@ class AuthViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> signInAnonymously() async {
+    _setLoading(true);
+    _clearError();
+    try {
+      await _repository.signInAnonymously();
+    } catch (e) {
+      _setError(_friendlyError(e));
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   Future<void> continueWithoutSignIn() async {
     _setLoading(true);
     _clearError();
@@ -161,16 +189,11 @@ class AuthViewModel extends ChangeNotifier {
     _setLoading(true);
     _clearError();
     try {
-      // 1. Store anonymous info first
-      final anonymousAge = _profile?.childAge;
-      final anonymousGender = _profile?.childGender;
-      final anonymousUid = _currentUser?.id;
-
-      // 2. Perform native sign in
       await _repository.signInWithGoogle();
-
-      // 3. Merge profiles
-      await _mergeAnonymousDataToNewUser(anonymousUid, anonymousAge, anonymousGender);
+      final uid = _currentUser?.id;
+      if (uid != null) {
+        await _syncLocalOnboardingToProfile(uid);
+      }
     } catch (e) {
       _setError(_friendlyError(e));
     } finally {
@@ -182,42 +205,10 @@ class AuthViewModel extends ChangeNotifier {
     _setLoading(true);
     _clearError();
     try {
-      // 1. Store anonymous info first
-      final anonymousAge = _profile?.childAge;
-      final anonymousGender = _profile?.childGender;
-      final anonymousUid = _currentUser?.id;
-
-      // 2. Perform native sign in
       await _repository.signInWithApple();
-
-      // 3. Merge profiles
-      await _mergeAnonymousDataToNewUser(anonymousUid, anonymousAge, anonymousGender);
-    } catch (e) {
-      _setError(_friendlyError(e));
-    } finally {
-      _setLoading(false);
-    }
-  }
-
-  Future<void> linkGoogle() async {
-    _setLoading(true);
-    _clearError();
-    try {
-      await _repository.linkGoogle();
-      final user = Supabase.instance.client.auth.currentUser;
-      if (user != null) {
-        _currentUser = user;
-        await _loadProfile(user.id);
-        if (!user.isAnonymous) {
-          _hasFinishedAuthSelection = true;
-        }
-      }
-    } on AuthException catch (e) {
-      if (e.code == 'identity_already_exists') {
-        debugPrint('[AuthVM] Google identity already exists, falling back to sign-in');
-        await signInWithGoogle();
-      } else {
-        _setError(_friendlyError(e));
+      final uid = _currentUser?.id;
+      if (uid != null) {
+        await _syncLocalOnboardingToProfile(uid);
       }
     } catch (e) {
       _setError(_friendlyError(e));
@@ -226,59 +217,7 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> linkApple() async {
-    _setLoading(true);
-    _clearError();
-    try {
-      await _repository.linkApple();
-      final user = Supabase.instance.client.auth.currentUser;
-      if (user != null) {
-        _currentUser = user;
-        await _loadProfile(user.id);
-        if (!user.isAnonymous) {
-          _hasFinishedAuthSelection = true;
-        }
-      }
-    } on AuthException catch (e) {
-      if (e.code == 'identity_already_exists') {
-        debugPrint('[AuthVM] Apple identity already exists, falling back to sign-in');
-        await signInWithApple();
-      } else {
-        _setError(_friendlyError(e));
-      }
-    } catch (e) {
-      _setError(_friendlyError(e));
-    } finally {
-      _setLoading(false);
-    }
-  }
 
-  Future<void> _mergeAnonymousDataToNewUser(String? oldUid, int? anonAge, String? anonGender) async {
-    final newUid = _currentUser?.id;
-    if (newUid == null) return;
-
-    try {
-      final newProfile = await _profileRepository.getProfile(newUid);
-      
-      final mergedAge = newProfile?.childAge ?? _localAge ?? anonAge;
-      final mergedGender = newProfile?.childGender ?? _localGender ?? anonGender;
-
-      if (mergedAge != null || mergedGender != null) {
-        await _profileRepository.updateChildInfo(newUid, age: mergedAge, gender: mergedGender);
-      }
-      
-      // Migrate bookmarks if they signed in anonymously first
-      if (oldUid != null && oldUid != newUid) {
-        await _bookmarkRepository.migrateBookmarks(oldUid, newUid);
-      }
-
-      await _loadProfile(newUid);
-      _hasFinishedAuthSelection = true;
-      notifyListeners();
-    } catch (e) {
-      debugPrint('[AuthVM] merge error: $e');
-    }
-  }
 
   Future<void> signOut() async {
     _setLoading(true);
@@ -289,12 +228,24 @@ class AuthViewModel extends ChangeNotifier {
       _hasFinishedAuthSelection = false;
       _isInitialized = false;
       notifyListeners();
-      
-      await _initializeAuth();
     } catch (e) {
       debugPrint('[AuthVM] signOut error: $e');
     } finally {
       _setLoading(false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    _authSubscription?.cancel();
+    super.dispose();
+  }
+
+  @override
+  void notifyListeners() {
+    if (!_isDisposed) {
+      super.notifyListeners();
     }
   }
 

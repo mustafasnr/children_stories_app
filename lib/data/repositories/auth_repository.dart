@@ -10,7 +10,5 @@ class AuthRepository {
   Future<void> signInAnonymously() => AuthService.signInAnonymously();
   Future<void> signInWithGoogle() => AuthService.signInWithGoogle();
   Future<void> signInWithApple() => AuthService.signInWithApple();
-  Future<void> linkGoogle() => AuthService.linkGoogle();
-  Future<void> linkApple() => AuthService.linkApple();
   Future<void> signOut() => AuthService.signOut();
 }

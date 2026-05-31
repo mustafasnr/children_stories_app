@@ -74,7 +74,19 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   return _buildErrorView(vm);
                 }
                 if (vm.books.isEmpty) {
-                  return _buildEmptyView(context);
+                  return RefreshIndicator(
+                    color: Theme.of(context).colorScheme.primary,
+                    onRefresh: vm.refresh,
+                    child: ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: [
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.7,
+                          child: _buildEmptyView(context),
+                        ),
+                      ],
+                    ),
+                  );
                 }
                 return RefreshIndicator(
                   color: Theme.of(context).colorScheme.primary,

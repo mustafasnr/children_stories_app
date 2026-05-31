@@ -16,18 +16,23 @@ class SubscriptionViewModel extends ChangeNotifier {
   String? get error => _error;
 
   Future<void> checkSubscriptionStatus() async {
+    final currentUser = Supabase.instance.client.auth.currentUser;
+    if (currentUser == null || currentUser.isAnonymous) {
+      _isPremium = false;
+      notifyListeners();
+      return;
+    }
+
     try {
       final profile = await Adapty().getProfile();
       _isPremium =
           profile.accessLevels[AppConstants.adaptyAccessLevelId]?.isActive ??
           profile.accessLevels.values.any((al) => al.isActive);
-      final currentUser = Supabase.instance.client.auth.currentUser;
-      if (currentUser != null) {
-        await ProfileRepository().updatePremiumStatus(
-          currentUser.id,
-          isPremium: _isPremium,
-        );
-      }
+      await ProfileRepository().updatePremiumStatus(
+        currentUser.id,
+        isPremium: _isPremium,
+        adaptyCustomerUserId: profile.profileId,
+      );
     } catch (e) {
       debugPrint('[SubscriptionVM] checkStatus error: $e');
     }
@@ -65,10 +70,11 @@ class SubscriptionViewModel extends ChangeNotifier {
                 ?.isActive ??
             result.profile.accessLevels.values.any((al) => al.isActive);
         final currentUser = Supabase.instance.client.auth.currentUser;
-        if (currentUser != null) {
+        if (currentUser != null && !currentUser.isAnonymous) {
           await ProfileRepository().updatePremiumStatus(
             currentUser.id,
             isPremium: _isPremium,
+            adaptyCustomerUserId: result.profile.profileId,
           );
         }
       } else {
@@ -96,10 +102,11 @@ class SubscriptionViewModel extends ChangeNotifier {
           profile.accessLevels[AppConstants.adaptyAccessLevelId]?.isActive ??
           profile.accessLevels.values.any((al) => al.isActive);
       final currentUser = Supabase.instance.client.auth.currentUser;
-      if (currentUser != null) {
+      if (currentUser != null && !currentUser.isAnonymous) {
         await ProfileRepository().updatePremiumStatus(
           currentUser.id,
           isPremium: _isPremium,
+          adaptyCustomerUserId: profile.profileId,
         );
       }
       _isLoading = false;

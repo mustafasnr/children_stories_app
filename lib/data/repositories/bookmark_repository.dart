@@ -5,17 +5,19 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class BookmarkRepository {
   final SupabaseClient _client = Supabase.instance.client;
 
-  Future<List<Book>> getBookmarkedBooks(String userId, String languageCode) async {
+  Future<List<Book>> getBookmarkedBooks(
+    String userId,
+    String languageCode,
+  ) async {
     final data = await _client
-        .from('bookmarks')
-        .select('books!inner(*, book_translations!inner(title, description))')
-        .eq('user_id', userId)
-        .eq('books.book_translations.language_code', languageCode);
+        .from('books')
+        .select(
+          '*, book_translations!inner(title, description), bookmarks!inner()',
+        )
+        .eq('bookmarks.user_id', userId)
+        .eq('book_translations.language_code', languageCode);
 
-    return (data as List).map((e) {
-      final bookData = e['books'] as Map<String, dynamic>;
-      return Book.fromJson(bookData);
-    }).toList();
+    return (data as List).map((e) => Book.fromJson(e)).toList();
   }
 
   Future<void> addBookmark(String userId, String bookId) async {
@@ -57,15 +59,14 @@ class BookmarkRepository {
           .select('book_id')
           .eq('user_id', newUserId);
 
-      final newBookIds = newBookmarks.map((e) => e['book_id'] as String).toSet();
+      final newBookIds = newBookmarks
+          .map((e) => e['book_id'] as String)
+          .toSet();
 
       final inserts = oldBookmarks
           .map((e) => e['book_id'] as String)
           .where((id) => !newBookIds.contains(id))
-          .map((id) => {
-                'user_id': newUserId,
-                'book_id': id,
-              })
+          .map((id) => {'user_id': newUserId, 'book_id': id})
           .toList();
 
       if (inserts.isNotEmpty) {

@@ -225,7 +225,9 @@ class _LoginCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
                   SocialLoginButton(
-                    label: 'Continue with Google',
+                    label: isUpgrade
+                        ? 'Connect with Google'
+                        : 'Continue with Google',
                     emoji: '🔵',
                     svgPath: 'assets/icons/google_icon.svg',
                     labelColor: Colors.black87,
@@ -234,13 +236,9 @@ class _LoginCard extends StatelessWidget {
                     onTap: authVM.isLoading
                         ? null
                         : () async {
-                            if (authVM.isLoggedIn && authVM.isAnonymous) {
-                              await authVM.linkGoogle();
-                            } else {
-                              await authVM.signInWithGoogle();
-                            }
+                            await authVM.signInWithGoogle();
                             if (!context.mounted) return;
-                            if (isUpgrade && !authVM.isAnonymous && authVM.error == null) {
+                            if (authVM.isLoggedIn && authVM.error == null) {
                               RestartWidget.restartApp(context);
                             }
                           },
@@ -248,7 +246,9 @@ class _LoginCard extends StatelessWidget {
                   if (Platform.isIOS) ...[
                     const SizedBox(height: 16),
                     SocialLoginButton(
-                      label: 'Continue with Apple',
+                      label: isUpgrade
+                          ? 'Connect with Apple'
+                          : 'Continue with Apple',
                       emoji: '🍎',
                       labelColor: Colors.white,
                       bgColor: Colors.black,
@@ -256,13 +256,9 @@ class _LoginCard extends StatelessWidget {
                       onTap: authVM.isLoading
                           ? null
                           : () async {
-                              if (authVM.isLoggedIn && authVM.isAnonymous) {
-                                await authVM.linkApple();
-                              } else {
-                                await authVM.signInWithApple();
-                              }
+                              await authVM.signInWithApple();
                               if (!context.mounted) return;
-                              if (isUpgrade && !authVM.isAnonymous && authVM.error == null) {
+                              if (authVM.isLoggedIn && authVM.error == null) {
                                 RestartWidget.restartApp(context);
                               }
                             },

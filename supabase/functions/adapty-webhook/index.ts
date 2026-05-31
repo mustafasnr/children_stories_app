@@ -25,15 +25,34 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get('Authorization')
     const webhookSecret = Deno.env.get('ADAPTY_WEBHOOK_SECRET')
     
-    if (webhookSecret && authHeader !== webhookSecret) {
-      console.warn('Unauthorized request attempt: Invalid Authorization header value.')
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
+    if (webhookSecret) {
+      const cleanSecret = webhookSecret.replace(/^Bearer\s+/i, '').trim()
+      const cleanHeader = authHeader ? authHeader.replace(/^Bearer\s+/i, '').trim() : ''
+      
+      if (cleanHeader !== cleanSecret) {
+        console.warn('Unauthorized request attempt: Invalid Authorization header value.')
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+    }
+
+    // 4. Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('Supabase credentials environment variables are missing.')
+      return new Response(JSON.stringify({ error: 'Internal configuration error' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
       })
     }
 
-    // 4. Parse request body
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+    // 5. Parse request body
     const bodyText = await req.text()
     if (!bodyText || bodyText.trim() === '') {
       // Empty body is treated as a validation request
@@ -55,9 +74,26 @@ Deno.serve(async (req) => {
       })
     }
 
-    // 5. Verification check
-    // Adapty sends POST validation request containing an empty JSON object '{}'
-    // or when checking connections.
+    // 6. Log event to public.adapty_events table (service role passes RLS)
+    const customerUserId = body.customer_user_id
+    const eventType = body.event_type || 'unknown'
+
+    const { error: logError } = await supabase
+      .from('adapty_events')
+      .insert({
+        event_type: eventType,
+        customer_user_id: customerUserId || null,
+        payload: body,
+      })
+    
+    if (logError) {
+      console.error('Failed to log Adapty event to database:', logError)
+    } else {
+      console.log(`Successfully logged event ${eventType} to adapty_events table.`)
+    }
+
+    // 7. Verification check
+    // Adapty sends POST validation request containing an empty JSON object '{}' or connection check.
     if (Object.keys(body).length === 0 || !body.event_type) {
       console.log('Received verification request. Responding with {}')
       return new Response(JSON.stringify({}), {
@@ -66,9 +102,8 @@ Deno.serve(async (req) => {
       })
     }
 
-    console.log(`Processing event: ${body.event_type} for customer_user_id: ${body.customer_user_id}`)
+    console.log(`Processing event: ${eventType} for customer_user_id: ${customerUserId}`)
 
-    const customerUserId = body.customer_user_id
     if (!customerUserId) {
       console.log('No customer_user_id present in the payload. Skipping database update.')
       return new Response(JSON.stringify({ success: true, message: 'Skipped: No customer_user_id' }), {
@@ -87,7 +122,7 @@ Deno.serve(async (req) => {
       })
     }
 
-    // 6. Determine premium status (isPremium)
+    // 8. Determine premium status (isPremium)
     const eventProperties = body.event_properties || {}
     let isPremium = false
 
@@ -142,22 +177,18 @@ Deno.serve(async (req) => {
       }
     }
 
-    console.log(`Updating user ${customerUserId} is_premium to ${isPremium}`)
-
-    // 7. Update database profiles table
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || ''
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-      console.error('Supabase credentials environment variables are missing.')
-      return new Response(JSON.stringify({ error: 'Internal configuration error' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
-      })
+    // 9. Check if the user is anonymous in auth.users
+    const { data: userData, error: userError } = await supabase.auth.admin.getUserById(customerUserId)
+    if (userError) {
+      console.warn(`Auth admin error fetching user ${customerUserId}:`, userError)
+    } else if (userData?.user?.is_anonymous) {
+      console.log(`User ${customerUserId} is anonymous. Overriding isPremium to false.`)
+      isPremium = false
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    console.log(`Updating user ${customerUserId} is_premium to ${isPremium}`)
 
+    // 10. Update database profiles table
     const { data, error } = await supabase
       .from('profiles')
       .update({
