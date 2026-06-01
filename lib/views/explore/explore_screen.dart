@@ -120,21 +120,31 @@ class _ExploreScreenState extends State<ExploreScreen> {
                           ),
                           SizedBox(
                             height: 200,
-                            child: PageView.builder(
-                              clipBehavior: Clip.none,
-                              padEnds: false,
-                              controller: PageController(viewportFraction: 0.9),
-                              itemCount: vm.featuredBooks.length,
-                              itemBuilder: (_, i) => Padding(
-                                padding: EdgeInsets.only(
-                                  right: i < vm.featuredBooks.length - 1
-                                      ? 12
-                                      : 0,
-                                ),
-                                child: FeaturedBookCard(
-                                  book: vm.featuredBooks[i],
-                                ),
+                            child: ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              physics: const ClampingScrollPhysics(),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
                               ),
+                              clipBehavior: Clip.none,
+                              separatorBuilder: (context, index) =>
+                                  const SizedBox(width: 20),
+                              itemCount: vm.featuredBooks.length,
+                              itemBuilder: (context, i) {
+                                final cardWidth =
+                                    MediaQuery.of(context).size.width - 60;
+                                return Container(
+                                  width: cardWidth,
+                                  margin: EdgeInsets.only(
+                                    right: i < vm.featuredBooks.length - 1
+                                        ? 12
+                                        : 0,
+                                  ),
+                                  child: FeaturedBookCard(
+                                    book: vm.featuredBooks[i],
+                                  ),
+                                );
+                              },
                             ),
                           ),
                           const SizedBox(height: 20),
@@ -185,9 +195,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                       const SliverToBoxAdapter(
                         child: Padding(
                           padding: EdgeInsets.symmetric(vertical: 24),
-                          child: Center(
-                            child: CircularProgressIndicator(),
-                          ),
+                          child: Center(child: CircularProgressIndicator()),
                         ),
                       ),
                   ],

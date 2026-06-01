@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+import 'package:intl/intl.dart';
 import 'package:children_stories/app/theme/app_colors.dart';
 import 'package:children_stories/app/theme/app_text_styles.dart';
 import 'package:children_stories/core/services/toast_service.dart';
@@ -11,6 +13,12 @@ import 'package:provider/provider.dart';
 class SubscriptionSection extends StatelessWidget {
   const SubscriptionSection({super.key});
 
+  String _formatExpiryDate(DateTime date) {
+    final systemLocale = ui.PlatformDispatcher.instance.locale.languageCode;
+    final localDate = date.toLocal();
+    return DateFormat('dd MMM HH:mm', systemLocale).format(localDate);
+  }
+
   @override
   Widget build(BuildContext context) {
     final authVM = context.read<AuthViewModel>();
@@ -18,22 +26,10 @@ class SubscriptionSection extends StatelessWidget {
     final isAnonymous = authVM.isAnonymous;
     final isPremium = subVM.isPremium;
 
-    return Column(
-      children: [
-        const PremiumCard(),
-        if (isPremium) ...[
-          const SizedBox(height: 12),
-          _buildSubscriptionTile(context, isAnonymous, subVM),
-        ],
-      ],
-    );
-  }
+    if (!isPremium) {
+      return const PremiumCard();
+    }
 
-  Widget _buildSubscriptionTile(
-    BuildContext context,
-    bool isAnonymous,
-    SubscriptionViewModel subVM,
-  ) {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -61,7 +57,7 @@ class SubscriptionSection extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             child: Icon(
-              Icons.headphones_rounded,
+              Icons.person_rounded,
               color: AppColors.primary,
               size: 20,
             ),
@@ -73,6 +69,14 @@ class SubscriptionSection extends StatelessWidget {
               fontWeight: FontWeight.w700,
             ),
           ),
+          subtitle: subVM.expiresAt != null
+              ? Text(
+                  'Expires: ${_formatExpiryDate(subVM.expiresAt!)}',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                )
+              : null,
           trailing: Icon(
             Icons.chevron_right_rounded,
             color: AppColors.textHint,
@@ -81,7 +85,7 @@ class SubscriptionSection extends StatelessWidget {
           onTap: () {
             if (isAnonymous) {
               ToastService.showInfo(
-                'Please sign in to access subscriptions',
+                'Please sign in to access subscriptions. Tap to sign in.',
                 onTap: () {
                   context.push('/login?upgrade=true');
                 },

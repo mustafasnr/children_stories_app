@@ -165,9 +165,11 @@ class PremiumCard extends StatelessWidget {
                       onTap: () {
                         if (isAnonymous) {
                           ToastService.showInfo(
-                            'Please sign in first to purchase Premium!',
+                            'Please sign in first to purchase Premium! Tap to sign in.',
+                            onTap: () {
+                              context.push('/login?upgrade=true');
+                            },
                           );
-                          context.push('/login?upgrade=true');
                         } else {
                           AdaptyService.showPaywall(context);
                         }
@@ -195,9 +197,11 @@ class PremiumCard extends StatelessWidget {
               : () {
                   if (isAnonymous) {
                     ToastService.showInfo(
-                      'Please sign in first to purchase Premium!',
+                      'Please sign in first to purchase Premium! Tap to sign in.',
+                      onTap: () {
+                        context.push('/login?upgrade=true');
+                      },
                     );
-                    context.push('/login?upgrade=true');
                   } else {
                     AdaptyService.showPaywall(context);
                   }

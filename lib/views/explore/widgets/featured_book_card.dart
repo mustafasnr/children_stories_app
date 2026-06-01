@@ -16,7 +16,6 @@ class FeaturedBookCard extends StatelessWidget {
       onTap: () => context.push('/book/${book.id}'),
       child: Container(
         height: 200,
-        margin: const EdgeInsets.symmetric(horizontal: 20),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
           gradient: book.coverUrl == null
@@ -76,25 +75,16 @@ class FeaturedBookCard extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.25),
+                      color: const Color(0xFFD1FAE5), // Mint Green
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.4),
-                      ),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text('⭐', style: TextStyle(fontSize: 11)),
-                        const SizedBox(width: 4),
-                        Text(
-                          'Featured',
-                          style: AppTextStyles.labelSmall.copyWith(
-                            color: Colors.white,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      'Featured',
+                      style: AppTextStyles.labelSmall.copyWith(
+                        color: const Color(0xFF065F46),
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.5,
+                      ),
                     ),
                   ),
                   const Spacer(),
@@ -141,15 +131,15 @@ class FeaturedBookCard extends StatelessWidget {
   Widget _premiumBadge() => Container(
     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
     decoration: BoxDecoration(
-      gradient: AppColors.premiumGradient,
+      color: const Color(0xFFFBBF24), // Yellowish/Amber
       borderRadius: BorderRadius.circular(10),
     ),
     child: const Text(
-      '✨ Premium',
+      'Premium',
       style: TextStyle(
         fontSize: 10,
-        fontWeight: FontWeight.w700,
-        color: Colors.white,
+        fontWeight: FontWeight.w800,
+        color: Color(0xFF1E1B4B),
       ),
     ),
   );

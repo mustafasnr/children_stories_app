@@ -87,10 +87,10 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                           ),
                         ],
                       ),
-                      child: Icon(
+                      child: const Icon(
                         Icons.arrow_back_ios_new_rounded,
                         size: 16,
-                        color: AppColors.textPrimary,
+                        color: Color(0xFF1D1A26),
                       ),
                     ),
                   ),
@@ -104,7 +104,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                           onTap: () async {
                             if (authVM.isAnonymous) {
                               ToastService.showInfo(
-                                'Please sign in to bookmark stories',
+                                'Please sign in to bookmark stories. Tap to sign in.',
                                 onTap: () {
                                   context.push('/login?upgrade=true');
                                 },
@@ -117,7 +117,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                                 if (mounted) {
                                   if (!wasBookmarked) {
                                     ToastService.showSuccess(
-                                      'Added to library!',
+                                      'Added to library! Tap to view.',
                                       onTap: () {
                                         context.go('/library');
                                       },
@@ -137,9 +137,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                             width: 36,
                             height: 36,
                             decoration: BoxDecoration(
-                              color: isBookmarked
-                                  ? AppColors.primary.withValues(alpha: 0.15)
-                                  : Colors.white.withValues(alpha: 0.9),
+                              color: Colors.white.withValues(alpha: 0.9),
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
@@ -155,8 +153,8 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                                   : Icons.bookmark_border_rounded,
                               size: 18,
                               color: isBookmarked
-                                  ? AppColors.primary
-                                  : AppColors.textPrimary,
+                                  ? const Color(0xFFF59E0B)
+                                  : const Color(0xFF1D1A26),
                             ),
                           ),
                         );
@@ -420,6 +418,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
             } else {
               final authVM = context.read<AuthViewModel>();
               if (authVM.isAnonymous) {
+                ToastService.showInfo('Please sign in first to access Premium content');
                 context.push('/login?upgrade=true');
               } else {
                 AdaptyService.showPaywall(context);
@@ -475,6 +474,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
               } else {
                 final authVM = context.read<AuthViewModel>();
                 if (authVM.isAnonymous) {
+                  ToastService.showInfo('Please sign in first to access Premium content');
                   context.push('/login?upgrade=true');
                 } else {
                   AdaptyService.showPaywall(context);

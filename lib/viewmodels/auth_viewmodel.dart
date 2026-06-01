@@ -189,12 +189,18 @@ class AuthViewModel extends ChangeNotifier {
     _setLoading(true);
     _clearError();
     try {
+      debugPrint('[AuthViewModel] signInWithGoogle called');
       await _repository.signInWithGoogle();
       final uid = _currentUser?.id;
+      debugPrint('[AuthViewModel] Sign-In repository call finished. User ID: $uid');
       if (uid != null) {
+        debugPrint('[AuthViewModel] Syncing onboarding data to profile for: $uid');
         await _syncLocalOnboardingToProfile(uid);
+        debugPrint('[AuthViewModel] Sync onboarding finished.');
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('[AuthViewModel] signInWithGoogle failed: $e');
+      debugPrint('[AuthViewModel] Stacktrace: $stackTrace');
       _setError(_friendlyError(e));
     } finally {
       _setLoading(false);
@@ -270,6 +276,6 @@ class AuthViewModel extends ChangeNotifier {
     final msg = e.toString().toLowerCase();
     if (msg.contains('cancel')) return 'Sign-in was cancelled.';
     if (msg.contains('network')) return 'No connection. Please check your internet.';
-    return 'Sign-in failed. Please try again.';
+    return 'Sign-in failed: $e';
   }
 }

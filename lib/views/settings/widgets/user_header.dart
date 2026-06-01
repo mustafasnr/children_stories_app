@@ -8,6 +8,7 @@ class UserHeader extends StatelessWidget {
   final String name;
   final String? email;
   final String? initials;
+  final bool isPremium;
 
   const UserHeader({
     super.key,
@@ -15,6 +16,7 @@ class UserHeader extends StatelessWidget {
     required this.name,
     this.email,
     this.initials,
+    this.isPremium = false,
   });
 
   @override
@@ -61,11 +63,39 @@ class UserHeader extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  name,
-                  style: AppTextStyles.titleLarge.copyWith(
-                    color: AppColors.textPrimary,
-                  ),
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        name,
+                        style: AppTextStyles.titleLarge.copyWith(
+                          color: AppColors.textPrimary,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (isPremium) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2.5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEAB308), // Slightly yellowish gold (Yellow 500)
+                          borderRadius: BorderRadius.circular(100),
+                        ),
+                        child: const Text(
+                          'Premium',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
                 if (email != null && email!.isNotEmpty) ...[
                   const SizedBox(height: 2),

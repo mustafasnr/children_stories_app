@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/services.dart';
 import 'package:children_stories/app/theme/app_colors.dart';
 import 'package:children_stories/app/theme/app_text_styles.dart';
 import 'package:children_stories/core/constants/app_icons.dart';
@@ -10,6 +11,7 @@ import 'package:children_stories/viewmodels/subscription_viewmodel.dart';
 import 'package:children_stories/viewmodels/theme_viewmodel.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:just_audio/just_audio.dart';
@@ -36,6 +38,11 @@ class _ReaderScreenState extends State<ReaderScreen> {
   bool _mockIsPlaying = false;
   double _mockPositionSeconds = 0.0;
 
+  // Page indicator animation state
+  int _lastPageIndex = -1;
+  bool _showPageIndicator = false;
+  Timer? _indicatorTimer;
+
   @override
   void initState() {
     super.initState();
@@ -58,6 +65,13 @@ class _ReaderScreenState extends State<ReaderScreen> {
           _audioService.loadUrl(_vm.audio!.audioUrl);
           _setupAudioSyncListener();
         });
+      }
+    }
+
+    if (!_vm.isLoading && _vm.pages.isNotEmpty) {
+      if (_vm.currentPageIndex != _lastPageIndex) {
+        _lastPageIndex = _vm.currentPageIndex;
+        _triggerPageIndicator();
       }
     }
   }
@@ -90,6 +104,20 @@ class _ReaderScreenState extends State<ReaderScreen> {
     });
   }
 
+  void _triggerPageIndicator() {
+    _indicatorTimer?.cancel();
+    setState(() {
+      _showPageIndicator = true;
+    });
+    _indicatorTimer = Timer(const Duration(seconds: 2), () {
+      if (mounted) {
+        setState(() {
+          _showPageIndicator = false;
+        });
+      }
+    });
+  }
+
   @override
   void dispose() {
     _vm.removeListener(_onVMChange);
@@ -98,6 +126,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
     _positionSubscription?.cancel();
     _playerStateSubscription?.cancel();
     _mockTimer?.cancel();
+    _indicatorTimer?.cancel();
     _audioService.dispose();
     super.dispose();
   }
@@ -366,9 +395,16 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider.value(
-      value: _vm,
-      child: Consumer<ReaderViewModel>(
+    final isDark = context.watch<ThemeViewModel>().isDarkMode;
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+        statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+      ),
+      child: ChangeNotifierProvider.value(
+        value: _vm,
+        child: Consumer<ReaderViewModel>(
         builder: (context, vm, _) {
           if (vm.isLoading) {
             return const Scaffold(
@@ -377,11 +413,63 @@ class _ReaderScreenState extends State<ReaderScreen> {
           }
           if (vm.pages.isEmpty) {
             return Scaffold(
-              appBar: AppBar(),
-              body: Center(
-                child: Text(
-                  vm.error ?? 'No pages found.',
-                  style: AppTextStyles.bodyMedium,
+              body: SafeArea(
+                bottom: false,
+                child: Column(
+                  children: [
+                    _buildTopBar(context, vm),
+                    Expanded(
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 40),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SvgPicture.asset(
+                                'assets/icons/books.svg',
+                                width: 160,
+                                height: 160,
+                              ),
+                              const SizedBox(height: 32),
+                              Text(
+                                'Oops! No pages found',
+                                style: AppTextStyles.headlineMedium.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.textPrimary,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                vm.error ?? 'This story does not have any pages loaded yet. Please check back later or try reading another story.',
+                                style: AppTextStyles.bodyMedium.copyWith(
+                                  color: AppColors.textSecondary,
+                                  height: 1.5,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 36),
+                              FilledButton.icon(
+                                onPressed: () => context.pop(),
+                                icon: const Icon(Icons.arrow_back_rounded, size: 20),
+                                label: const Text('Go Back'),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: AppColors.primary,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  elevation: 0,
+                                ),
+                              ),
+                              const SizedBox(height: 60),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             );
@@ -396,27 +484,72 @@ class _ReaderScreenState extends State<ReaderScreen> {
                   _buildTopBar(context, vm),
                   // Page content
                   Expanded(
-                    child: PageView.builder(
-                      controller: _pageController,
-                      itemCount: vm.pages.length,
-                      onPageChanged: (index) {
-                        if (_isHandlingAudioSync) return;
-                        vm.goToPage(index);
-                        if (_useRealAudio) {
-                          final seekTarget = Duration(
-                            milliseconds: (vm.pages[index].audioSeekSeconds * 1000).toInt(),
-                          );
-                          _audioService.seek(seekTarget);
-                        } else {
-                          setState(() {
-                            _mockPositionSeconds = index * 15.0;
-                          });
-                        }
-                      },
-                      itemBuilder: (_, index) {
-                        final page = vm.pages[index];
-                        return _buildPageContent(vm, page);
-                      },
+                    child: Stack(
+                      alignment: Alignment.topCenter,
+                      children: [
+                        PageView.builder(
+                          controller: _pageController,
+                          itemCount: vm.pages.length,
+                          onPageChanged: (index) {
+                            if (_isHandlingAudioSync) return;
+                            vm.goToPage(index);
+                            if (_useRealAudio) {
+                              final seekTarget = Duration(
+                                milliseconds: (vm.pages[index].audioSeekSeconds * 1000).toInt(),
+                              );
+                              _audioService.seek(seekTarget);
+                            } else {
+                              setState(() {
+                                _mockPositionSeconds = index * 15.0;
+                              });
+                            }
+                          },
+                          itemBuilder: (_, index) {
+                            final page = vm.pages[index];
+                            return _buildPageContent(vm, page);
+                          },
+                        ),
+                        Positioned(
+                          top: 16,
+                          child: IgnorePointer(
+                            child: AnimatedOpacity(
+                              opacity: _showPageIndicator ? 1.0 : 0.0,
+                              duration: const Duration(milliseconds: 300),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? AppColors.surface.withValues(alpha: 0.9)
+                                      : Colors.white.withValues(alpha: 0.9),
+                                  borderRadius: BorderRadius.circular(100),
+                                  border: Border.all(
+                                    color: isDark
+                                        ? Colors.white.withValues(alpha: 0.12)
+                                        : AppColors.textHint.withValues(alpha: 0.15),
+                                    width: 1,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Text(
+                                  '${vm.currentPageIndex + 1} / ${vm.totalPages}',
+                                  style: AppTextStyles.labelSmall.copyWith(
+                                    color: AppColors.textPrimary,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 12,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -426,8 +559,9 @@ class _ReaderScreenState extends State<ReaderScreen> {
           );
         },
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildTopBar(BuildContext context, ReaderViewModel vm) {
     final themeVM = context.watch<ThemeViewModel>();
@@ -455,25 +589,13 @@ class _ReaderScreenState extends State<ReaderScreen> {
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  vm.book?.title ?? '',
-                  style: AppTextStyles.titleMedium.copyWith(
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: -0.3,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Page ${vm.currentPageIndex + 1} of ${vm.totalPages}',
-                  style: AppTextStyles.labelSmall.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
+            child: Text(
+              vm.book?.title ?? '',
+              style: AppTextStyles.titleMedium.copyWith(
+                fontWeight: FontWeight.bold,
+                letterSpacing: -0.3,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
           IconButton(
@@ -576,6 +698,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
     final dur = _totalDurationSeconds;
     final playing = _isPlaying;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final hasAudio = _vm.hasAudio;
 
     return Container(
       decoration: BoxDecoration(
@@ -591,18 +714,20 @@ class _ReaderScreenState extends State<ReaderScreen> {
               data: SliderThemeData(
                 trackHeight: 2.0,
                 trackShape: FullWidthTrackShape(),
-                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
-                thumbColor: AppColors.primary,
-                activeTrackColor: AppColors.primary,
+                thumbShape: hasAudio
+                    ? const RoundSliderThumbShape(enabledThumbRadius: 8)
+                    : const RoundSliderThumbShape(enabledThumbRadius: 0),
+                thumbColor: hasAudio ? AppColors.primary : Colors.transparent,
+                activeTrackColor: hasAudio ? AppColors.primary : AppColors.textHint.withValues(alpha: 0.2),
                 inactiveTrackColor: AppColors.textHint.withValues(alpha: isDark ? 0.15 : 0.1),
                 overlayShape: SliderComponentShape.noOverlay,
               ),
               child: SizedBox(
                 height: 12,
                 child: Slider(
-                  value: pos.clamp(0.0, dur > 0 ? dur : 1.0),
-                  max: dur > 0 ? dur : 1.0,
-                  onChanged: _seekTo,
+                  value: hasAudio ? pos.clamp(0.0, dur > 0 ? dur : 1.0) : 0.0,
+                  max: hasAudio && dur > 0 ? dur : 1.0,
+                  onChanged: hasAudio ? _seekTo : null,
                 ),
               ),
             ),
@@ -614,17 +739,21 @@ class _ReaderScreenState extends State<ReaderScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    _formatDuration(Duration(milliseconds: (pos * 1000).toInt())),
+                    hasAudio
+                        ? _formatDuration(Duration(milliseconds: (pos * 1000).toInt()))
+                        : '-:-',
                     style: TextStyle(
-                      color: AppColors.textSecondary,
+                      color: hasAudio ? AppColors.textSecondary : AppColors.textHint,
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   Text(
-                    _formatDuration(Duration(milliseconds: (dur * 1000).toInt())),
+                    hasAudio
+                        ? _formatDuration(Duration(milliseconds: (dur * 1000).toInt()))
+                        : '-:-',
                     style: TextStyle(
-                      color: AppColors.textSecondary,
+                      color: hasAudio ? AppColors.textSecondary : AppColors.textHint,
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                     ),
@@ -652,7 +781,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                   // Play / Pause
                   _controlBtn(
                     icon: playing ? AppIcons.pause : AppIcons.play,
-                    onTap: _togglePlay,
+                    onTap: hasAudio ? _togglePlay : null,
                     size: 26,
                     isPrimary: true,
                   ),
@@ -688,12 +817,14 @@ class _ReaderScreenState extends State<ReaderScreen> {
         padding: EdgeInsets.all(isPrimary ? 14 : 10),
         decoration: BoxDecoration(
           color: isPrimary
-              ? AppColors.primary
+              ? (onTap != null
+                  ? AppColors.primary
+                  : AppColors.textHint.withValues(alpha: 0.2))
               : onTap != null
                   ? AppColors.primary.withValues(alpha: 0.08)
                   : AppColors.surfaceVariant.withValues(alpha: 0.2),
           shape: BoxShape.circle,
-          boxShadow: isPrimary
+          boxShadow: isPrimary && onTap != null
               ? [
                   BoxShadow(
                     color: AppColors.primary.withValues(alpha: 0.35),
@@ -707,7 +838,9 @@ class _ReaderScreenState extends State<ReaderScreen> {
           icon,
           size: size,
           color: isPrimary
-              ? Colors.white
+              ? (onTap != null
+                  ? Colors.white
+                  : AppColors.textHint)
               : onTap != null
                   ? AppColors.primary
                   : AppColors.textHint,
