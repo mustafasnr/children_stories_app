@@ -2,9 +2,7 @@ import 'package:children_stories/app/app.dart';
 import 'package:children_stories/app/theme/app_colors.dart';
 import 'package:children_stories/app/theme/app_text_styles.dart';
 import 'package:children_stories/viewmodels/auth_viewmodel.dart';
-import 'package:children_stories/viewmodels/subscription_viewmodel.dart';
 import 'package:children_stories/viewmodels/theme_viewmodel.dart';
-import 'package:children_stories/core/services/toast_service.dart';
 import 'package:children_stories/views/settings/widgets/app_language_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -15,28 +13,11 @@ class SettingsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authVM = context.read<AuthViewModel>();
-    final subVM = context.watch<SubscriptionViewModel>();
     final themeVM = context.watch<ThemeViewModel>();
     final isAnonymous = authVM.isAnonymous;
 
     return Column(
       children: [
-        if (!isAnonymous) ...[
-          _buildTile(
-            context: context,
-            icon: Icons.restore_rounded,
-            title: 'Restore Purchases',
-            onTap: () async {
-              final restored = await subVM.restorePurchases();
-              if (restored) {
-                ToastService.showSuccess('Purchases restored!');
-              } else {
-                ToastService.showInfo('No active subscription found.');
-              }
-            },
-          ),
-          const SizedBox(height: 12),
-        ],
         _buildSwitchTile(
           context: context,
           icon: themeVM.themeMode == ThemeMode.dark

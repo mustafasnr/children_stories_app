@@ -26,16 +26,6 @@ class ProfileViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updatePremiumStatus(String userId, {required bool isPremium}) async {
-    try {
-      await _repository.updatePremiumStatus(userId, isPremium: isPremium);
-      _profile = _profile?.copyWith(isPremium: isPremium);
-      notifyListeners();
-    } catch (e) {
-      debugPrint('[ProfileVM] updatePremium error: $e');
-    }
-  }
-
   void reset() {
     _profile = null;
     _isLoading = false;

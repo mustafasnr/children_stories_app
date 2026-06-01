@@ -43,22 +43,4 @@ class ProfileRepository {
         })
         .eq('id', userId);
   }
-
-  Future<void> updatePremiumStatus(
-    String userId, {
-    required bool isPremium,
-    String? adaptyCustomerUserId,
-  }) async {
-    final Map<String, dynamic> updates = {
-      'is_premium': isPremium,
-      'updated_at': DateTime.now().toIso8601String(),
-    };
-    if (adaptyCustomerUserId != null) {
-      updates['adapty_customer_user_id'] = adaptyCustomerUserId;
-    }
-    await _client
-        .from(SupabaseConstants.profilesTable)
-        .update(updates)
-        .eq('id', userId);
-  }
 }

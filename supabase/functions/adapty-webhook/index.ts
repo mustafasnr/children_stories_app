@@ -126,7 +126,24 @@ Deno.serve(async (req) => {
     const eventProperties = body.event_properties || {}
     let isPremium = false
 
-    if (body.event_type === 'access_level_updated') {
+    const negativeEvents = [
+      'subscription_expired',
+      'subscription_refunded',
+      'trial_expired',
+    ]
+    const positiveEvents = [
+      'subscription_started',
+      'subscription_renewed',
+      'subscription_renewal_reactivated',
+      'trial_started',
+      'trial_renewal_reactivated',
+      'trial_converted',
+      'entered_grace_period',
+    ]
+
+    if (negativeEvents.includes(body.event_type)) {
+      isPremium = false
+    } else if (body.event_type === 'access_level_updated') {
       const accessLevelId = eventProperties.access_level_id || body.data?.access_level?.id
       const isActive = eventProperties.is_active !== undefined 
         ? eventProperties.is_active 
@@ -141,39 +158,20 @@ Deno.serve(async (req) => {
           status: 200,
         })
       }
+    } else if (positiveEvents.includes(body.event_type)) {
+      isPremium = true
     } else {
-      // For general subscription events
+      // Fallback checks
       if (eventProperties.profile_has_access_level !== undefined) {
         isPremium = !!eventProperties.profile_has_access_level
       } else if (eventProperties.is_active !== undefined) {
         isPremium = !!eventProperties.is_active
       } else {
-        // Fallback checks based on event type if properties are completely missing
-        const positiveEvents = [
-          'subscription_started',
-          'subscription_renewed',
-          'subscription_renewal_reactivated',
-          'trial_started',
-          'trial_renewal_reactivated',
-          'trial_converted',
-          'entered_grace_period',
-        ]
-        const negativeEvents = [
-          'subscription_expired',
-          'subscription_refunded',
-          'trial_expired',
-        ]
-        if (positiveEvents.includes(body.event_type)) {
-          isPremium = true
-        } else if (negativeEvents.includes(body.event_type)) {
-          isPremium = false
-        } else {
-          console.log(`Ignored event: ${body.event_type} - No access level information.`)
-          return new Response(JSON.stringify({ success: true, message: `Ignored event: ${body.event_type}` }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 200,
-          })
-        }
+        console.log(`Ignored event: ${body.event_type} - No access level information.`)
+        return new Response(JSON.stringify({ success: true, message: `Ignored event: ${body.event_type}` }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        })
       }
     }
 
@@ -186,27 +184,30 @@ Deno.serve(async (req) => {
       isPremium = false
     }
 
-    console.log(`Updating user ${customerUserId} is_premium to ${isPremium}`)
+    const expiresAt = eventProperties.expires_at || eventProperties.subscription_expires_at || body.data?.access_level?.expires_at || null
 
-    // 10. Update database profiles table
+    console.log(`Updating user ${customerUserId} subscription: is_premium = ${isPremium}, expires_at = ${expiresAt}`)
+
+    // 10. Update database subscriptions table
     const { data, error } = await supabase
-      .from('profiles')
-      .update({
+      .from('subscriptions')
+      .upsert({
+        id: customerUserId,
         is_premium: isPremium,
+        expires_at: expiresAt,
         updated_at: new Date().toISOString(),
-      })
-      .eq('id', customerUserId)
+      }, { onConflict: 'id' })
       .select()
 
     if (error) {
-      console.error(`Database error updating profile ${customerUserId}:`, error)
+      console.error(`Database error updating subscription for ${customerUserId}:`, error)
       return new Response(JSON.stringify({ error: error.message }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
       })
     }
 
-    console.log(`Successfully updated profile ${customerUserId}. Rows affected: ${data?.length || 0}`)
+    console.log(`Successfully updated subscription for ${customerUserId}. Rows affected: ${data?.length || 0}`)
 
     return new Response(JSON.stringify({ success: true, updated: data?.length || 0, is_premium: isPremium }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

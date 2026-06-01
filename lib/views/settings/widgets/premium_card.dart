@@ -22,7 +22,6 @@ class PremiumCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: isPremium ? Colors.transparent : null,
         gradient: isPremium
             ? AppColors.premiumGradient
             : LinearGradient(
