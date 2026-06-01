@@ -109,7 +109,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const TextSizeCard(),
 
                   const SizedBox(height: 48),
-                  Text('Story Time v1.0.0', style: AppTextStyles.labelSmall),
+                  Text(
+                    'Children Stories v1.0.0',
+                    style: AppTextStyles.labelSmall,
+                  ),
                 ],
               ),
             ),

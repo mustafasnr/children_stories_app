@@ -63,7 +63,7 @@ class _AppContentState extends State<_AppContent> {
     AppColors.current = isDark ? AppColors.darkScheme : AppColors.lightScheme;
 
     return MaterialApp.router(
-      title: 'Story Time',
+      title: 'Children Stories',
       themeMode: activeThemeMode,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
@@ -100,9 +100,6 @@ class _RestartWidgetState extends State<RestartWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return KeyedSubtree(
-      key: key,
-      child: widget.child,
-    );
+    return KeyedSubtree(key: key, child: widget.child);
   }
 }

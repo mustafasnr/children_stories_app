@@ -19,7 +19,7 @@ class AppConstants {
       '473679521746-rnchjk6ql4ig9u9kp11jtnm6vfgn6csp.apps.googleusercontent.com';
 
   // ─── App info ──────────────────────────────────────────────────────────────
-  static const String appName = 'Story Time';
+  static const String appName = 'Children Stories';
   static const String appTagline = 'Adventure in every page ✨';
 
   // ─── UI ────────────────────────────────────────────────────────────────────

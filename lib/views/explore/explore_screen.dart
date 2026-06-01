@@ -66,7 +66,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   elevation: 0,
                   toolbarHeight: 70,
                   title: Text(
-                    'Story Time',
+                    'Children Stories',
                     style: AppTextStyles.displayMedium.copyWith(
                       color: Theme.of(context).colorScheme.onSurface,
                     ),

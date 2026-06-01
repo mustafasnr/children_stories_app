@@ -74,7 +74,7 @@ class LoginScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Story Time',
+                      'Children Stories',
                       style: AppTextStyles.displayLarge.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w900,
