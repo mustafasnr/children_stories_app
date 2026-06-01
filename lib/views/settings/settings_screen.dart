@@ -9,6 +9,7 @@ import 'package:children_stories/views/settings/widgets/settings_section.dart';
 import 'package:children_stories/views/settings/widgets/text_size_card.dart';
 import 'package:children_stories/views/settings/widgets/user_header.dart';
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -20,6 +21,7 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   late final ProfileViewModel _vm;
+  String _appVersion = '1.0.0';
 
   @override
   void initState() {
@@ -30,6 +32,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<SubscriptionViewModel>().checkSubscriptionStatus();
     });
+    _initPackageInfo();
+  }
+
+  Future<void> _initPackageInfo() async {
+    try {
+      final packageInfo = await PackageInfo.fromPlatform();
+      if (mounted) {
+        setState(() {
+          _appVersion = packageInfo.version;
+        });
+      }
+    } catch (_) {}
   }
 
   @override
@@ -109,9 +123,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const TextSizeCard(),
 
                   const SizedBox(height: 48),
-                  Text(
-                    'Children Stories v1.0.0',
-                    style: AppTextStyles.labelSmall,
+                  Text.rich(
+                    TextSpan(
+                      text: 'Children Stories ',
+                      children: [
+                        TextSpan(
+                          text: 'v$_appVersion',
+                          style: const TextStyle(fontWeight: FontWeight.w900),
+                        ),
+                      ],
+                    ),
+                    style: AppTextStyles.labelMedium,
                   ),
                 ],
               ),
