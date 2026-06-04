@@ -12,7 +12,8 @@ class AdaptyService {
           AdaptyConfiguration(apiKey: AppConstants.adaptyPublicKey)
             ..withLogLevel(
               kDebugMode ? AdaptyLogLevel.verbose : AdaptyLogLevel.error,
-            );
+            )
+            ..withGoogleAdvertisingIdCollectionDisabled(true);
       await Adapty().activate(configuration: configuration);
     } catch (e) {
       debugPrint('[Adapty] initialize error: $e');
@@ -55,7 +56,7 @@ class AdaptyService {
       if (!context.mounted) return;
 
       final view = await AdaptyUI().createPaywallView(paywall: paywall);
-      
+
       if (!context.mounted) return;
 
       // Register the event observer
@@ -65,9 +66,9 @@ class AdaptyService {
     } catch (e) {
       debugPrint('[Adapty] showPaywall error: $e');
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load paywall: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to load paywall: $e')));
       }
     }
   }
@@ -148,10 +149,7 @@ class _PaywallObserver implements AdaptyUIPaywallsEventsObserver {
   }
 
   @override
-  void paywallViewDidFailRestore(
-    AdaptyUIPaywallView view,
-    AdaptyError error,
-  ) {}
+  void paywallViewDidFailRestore(AdaptyUIPaywallView view, AdaptyError error) {}
 
   @override
   void paywallViewDidFailLoadingProducts(

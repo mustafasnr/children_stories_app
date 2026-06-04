@@ -4,6 +4,7 @@ import 'package:children_stories/data/models/book_model.dart';
 import 'package:children_stories/data/models/book_page_model.dart';
 import 'package:children_stories/data/models/category_model.dart';
 import 'package:children_stories/data/models/language_model.dart';
+import 'package:flutter/foundation.dart' hide Category;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class BookRepository {
@@ -56,7 +57,10 @@ class BookRepository {
     return (data as List).map((e) => Book.fromJson(e)).toList();
   }
 
-  Future<List<Book>> getFeaturedBooks(String languageCode, {int? childAge}) async {
+  Future<List<Book>> getFeaturedBooks(
+    String languageCode, {
+    int? childAge,
+  }) async {
     var query = _client
         .from(SupabaseConstants.booksTable)
         .select('*, book_translations!inner(title, description)')
@@ -82,7 +86,9 @@ class BookRepository {
   // ─── Pages (with translations) ──────────────────────────────────────────
 
   Future<List<BookPage>> getBookPages(
-      String bookId, String languageCode) async {
+    String bookId,
+    String languageCode,
+  ) async {
     final data = await _client
         .from(SupabaseConstants.pagesTable)
         .select('*, page_translations!inner(text_content, audio_seek_seconds)')
@@ -94,6 +100,17 @@ class BookRepository {
 
   // ─── Audio ──────────────────────────────────────────────────────────────
 
+  String _getStoragePath(String urlOrPath, String bucketName) {
+    if (urlOrPath.startsWith('http://') || urlOrPath.startsWith('https://')) {
+      final searchStr = '/$bucketName/';
+      final idx = urlOrPath.indexOf(searchStr);
+      if (idx != -1) {
+        return Uri.decodeComponent(urlOrPath.substring(idx + searchStr.length));
+      }
+    }
+    return urlOrPath;
+  }
+
   Future<BookAudio?> getBookAudio(String bookId, String languageCode) async {
     final data = await _client
         .from(SupabaseConstants.bookAudioTable)
@@ -101,6 +118,23 @@ class BookRepository {
         .eq('book_id', bookId)
         .eq('language_code', languageCode)
         .maybeSingle();
-    return data == null ? null : BookAudio.fromJson(data);
+    if (data == null) return null;
+
+    final mutableData = Map<String, dynamic>.from(data);
+    try {
+      final originalUrl = mutableData['audio_url'] as String;
+      final path = _getStoragePath(originalUrl, SupabaseConstants.audioBucket);
+
+      // Generate a signed URL valid for 20 minutes (1200 seconds)
+      final signedUrl = await _client.storage
+          .from(SupabaseConstants.audioBucket)
+          .createSignedUrl(path, 1200);
+
+      mutableData['audio_url'] = signedUrl;
+    } catch (e) {
+      debugPrint('[BookRepository] Failed to create signed URL for audio: $e');
+    }
+
+    return BookAudio.fromJson(mutableData);
   }
 }

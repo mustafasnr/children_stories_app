@@ -1,9 +1,12 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Internet access -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <!-- Google Play Billing for subscriptions -->
     <uses-permission android:name="com.android.vending.BILLING"/>
+    <!-- Prevent Google Play Services from automatically adding AD_ID permission -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" tools:node="remove"/>
 
     <application
         android:label="Children Stories"

@@ -37,7 +37,8 @@ Future<void> main() async {
   // Initialize Adapty
   try {
     final config = AdaptyConfiguration(apiKey: AppConstants.adaptyPublicKey)
-      ..withLogLevel(AdaptyLogLevel.verbose);
+      ..withLogLevel(AdaptyLogLevel.verbose)
+      ..withGoogleAdvertisingIdCollectionDisabled(true);
     await Adapty().activate(configuration: config);
   } catch (e) {
     debugPrint('[Adapty] init skipped: $e');
