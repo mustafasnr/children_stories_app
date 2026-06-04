@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:children_stories/app/theme/app_colors.dart';
 import 'package:children_stories/app/theme/app_text_styles.dart';
 import 'package:children_stories/core/constants/app_icons.dart';
+import 'package:children_stories/core/constants/supabase_constants.dart';
 import 'package:children_stories/core/services/audio_service.dart';
 import 'package:children_stories/data/models/book_page_model.dart';
 import 'package:children_stories/viewmodels/home_viewmodel.dart';
@@ -56,14 +57,19 @@ class _ReaderScreenState extends State<ReaderScreen> {
   }
 
   void _onVMChange() {
-    // Load audio once book is loaded and user has premium
-    if (!_audioInitialized && _vm.hasAudio && !_vm.isLoading) {
+    // Load audio once book is loaded and user has access (free book or premium user)
+    if (!_audioInitialized &&
+        _vm.hasAudio &&
+        !_vm.isLoading &&
+        _vm.book != null) {
       final subVM = context.read<SubscriptionViewModel>();
-      if (subVM.isPremium) {
+      final canAccess = !_vm.book!.isPremium || subVM.isPremium;
+      if (canAccess) {
         _audioInitialized = true;
-        _audioService.init().then((_) {
-          _audioService.loadUrl(_vm.audio!.audioUrl);
+        _audioService.init().then((_) async {
+          await _audioService.loadUrl(_vm.audio!.audioUrl);
           _setupAudioSyncListener();
+          await _audioService.play(); // Start playing automatically
         });
       }
     }
@@ -79,7 +85,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
   void _setupAudioSyncListener() {
     _positionSubscription = _audioService.positionStream.listen((pos) {
       setState(() {}); // Rebuild UI to update slider progress
-      
+
       if (_isHandlingAudioSync) return;
       if (!_vm.hasAudio || _vm.pages.isEmpty) return;
 
@@ -89,13 +95,13 @@ class _ReaderScreenState extends State<ReaderScreen> {
         _vm.goToPage(targetIdx);
         _pageController
             .animateToPage(
-          targetIdx,
-          duration: const Duration(milliseconds: 350),
-          curve: Curves.easeInOut,
-        )
+              targetIdx,
+              duration: const Duration(milliseconds: 350),
+              curve: Curves.easeInOut,
+            )
             .then((_) {
-          _isHandlingAudioSync = false;
-        });
+              _isHandlingAudioSync = false;
+            });
       }
     });
 
@@ -133,9 +139,9 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
   // Unified helpers for audio playback (delegating to real audio or mock)
   bool get _useRealAudio {
-    if (!_vm.hasAudio) return false;
+    if (!_vm.hasAudio || _vm.book == null) return false;
     final subVM = context.read<SubscriptionViewModel>();
-    return subVM.isPremium;
+    return !_vm.book!.isPremium || subVM.isPremium;
   }
 
   double get _currentPositionSeconds {
@@ -157,7 +163,8 @@ class _ReaderScreenState extends State<ReaderScreen> {
     }
   }
 
-  double get _mockDurationSeconds => _vm.pages.length * 15.0; // 15 seconds per page mock
+  double get _mockDurationSeconds =>
+      _vm.pages.length * 15.0; // 15 seconds per page mock
 
   bool get _isPlaying {
     if (_useRealAudio) {
@@ -202,19 +209,22 @@ class _ReaderScreenState extends State<ReaderScreen> {
         }
 
         // Synchronize page based on mock timer progress (15 seconds per page)
-        final targetIdx = (_mockPositionSeconds / 15.0).floor().clamp(0, _vm.pages.length - 1);
+        final targetIdx = (_mockPositionSeconds / 15.0).floor().clamp(
+          0,
+          _vm.pages.length - 1,
+        );
         if (targetIdx != _vm.currentPageIndex) {
           _isHandlingAudioSync = true;
           _vm.goToPage(targetIdx);
           _pageController
               .animateToPage(
-            targetIdx,
-            duration: const Duration(milliseconds: 350),
-            curve: Curves.easeInOut,
-          )
+                targetIdx,
+                duration: const Duration(milliseconds: 350),
+                curve: Curves.easeInOut,
+              )
               .then((_) {
-            _isHandlingAudioSync = false;
-          });
+                _isHandlingAudioSync = false;
+              });
         }
       });
     });
@@ -226,19 +236,22 @@ class _ReaderScreenState extends State<ReaderScreen> {
     } else {
       setState(() {
         _mockPositionSeconds = seconds.clamp(0.0, _mockDurationSeconds);
-        final targetIdx = (_mockPositionSeconds / 15.0).floor().clamp(0, _vm.pages.length - 1);
+        final targetIdx = (_mockPositionSeconds / 15.0).floor().clamp(
+          0,
+          _vm.pages.length - 1,
+        );
         if (targetIdx != _vm.currentPageIndex) {
           _isHandlingAudioSync = true;
           _vm.goToPage(targetIdx);
           _pageController
               .animateToPage(
-            targetIdx,
-            duration: const Duration(milliseconds: 350),
-            curve: Curves.easeInOut,
-          )
+                targetIdx,
+                duration: const Duration(milliseconds: 350),
+                curve: Curves.easeInOut,
+              )
               .then((_) {
-            _isHandlingAudioSync = false;
-          });
+                _isHandlingAudioSync = false;
+              });
         }
       });
     }
@@ -271,17 +284,17 @@ class _ReaderScreenState extends State<ReaderScreen> {
     _vm.goToPage(index);
     _pageController
         .animateToPage(
-      index,
-      duration: const Duration(milliseconds: 350),
-      curve: Curves.easeInOut,
-    )
+          index,
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeInOut,
+        )
         .then((_) {
-      _isHandlingAudioSync = false;
-    });
+          _isHandlingAudioSync = false;
+        });
 
     if (_useRealAudio) {
       final seekTarget = Duration(
-        milliseconds: (_vm.pages[index].audioSeekSeconds * 1000).toInt(),
+        milliseconds: (_vm.getPageSeekSeconds(index) * 1000).toInt(),
       );
       _audioService.seek(seekTarget);
     } else {
@@ -301,7 +314,9 @@ class _ReaderScreenState extends State<ReaderScreen> {
             return Container(
               decoration: BoxDecoration(
                 color: AppColors.surface,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(28),
+                ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.15),
@@ -328,11 +343,17 @@ class _ReaderScreenState extends State<ReaderScreen> {
                   const SizedBox(height: 20),
                   Row(
                     children: [
-                      Icon(Icons.format_size_rounded, color: AppColors.primary, size: 22),
+                      Icon(
+                        Icons.format_size_rounded,
+                        color: AppColors.primary,
+                        size: 22,
+                      ),
                       const SizedBox(width: 10),
                       Text(
                         'Story Font Size',
-                        style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold),
+                        style: AppTextStyles.titleMedium.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
@@ -353,7 +374,9 @@ class _ReaderScreenState extends State<ReaderScreen> {
                             activeTrackColor: AppColors.primary,
                             inactiveTrackColor: AppColors.surfaceVariant,
                             thumbColor: AppColors.primary,
-                            overlayColor: AppColors.primary.withValues(alpha: 0.12),
+                            overlayColor: AppColors.primary.withValues(
+                              alpha: 0.12,
+                            ),
                             trackHeight: 4,
                           ),
                           child: Slider(
@@ -381,7 +404,9 @@ class _ReaderScreenState extends State<ReaderScreen> {
                   Center(
                     child: Text(
                       'Preview Size: ${themeVM.storyTextSize.toInt()} px',
-                      style: AppTextStyles.labelMedium.copyWith(color: AppColors.textSecondary),
+                      style: AppTextStyles.labelMedium.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   ),
                 ],
@@ -405,163 +430,181 @@ class _ReaderScreenState extends State<ReaderScreen> {
       child: ChangeNotifierProvider.value(
         value: _vm,
         child: Consumer<ReaderViewModel>(
-        builder: (context, vm, _) {
-          if (vm.isLoading) {
-            return const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
-            );
-          }
-          if (vm.pages.isEmpty) {
+          builder: (context, vm, _) {
+            if (vm.isLoading) {
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            }
+            if (vm.pages.isEmpty) {
+              return Scaffold(
+                body: SafeArea(
+                  bottom: false,
+                  child: Column(
+                    children: [
+                      _buildTopBar(context, vm),
+                      Expanded(
+                        child: Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 40),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SvgPicture.asset(
+                                  'assets/icons/books.svg',
+                                  width: 160,
+                                  height: 160,
+                                ),
+                                const SizedBox(height: 32),
+                                Text(
+                                  'Oops! No pages found',
+                                  style: AppTextStyles.headlineMedium.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  vm.error ??
+                                      'This story does not have any pages loaded yet. Please check back later or try reading another story.',
+                                  style: AppTextStyles.bodyMedium.copyWith(
+                                    color: AppColors.textSecondary,
+                                    height: 1.5,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 36),
+                                FilledButton.icon(
+                                  onPressed: () => context.pop(),
+                                  icon: const Icon(
+                                    Icons.arrow_back_rounded,
+                                    size: 20,
+                                  ),
+                                  label: const Text('Go Back'),
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: AppColors.primary,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 28,
+                                      vertical: 14,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    elevation: 0,
+                                  ),
+                                ),
+                                const SizedBox(height: 60),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+
             return Scaffold(
               body: SafeArea(
                 bottom: false,
                 child: Column(
                   children: [
+                    // Custom top app bar
                     _buildTopBar(context, vm),
+                    // Page content
                     Expanded(
-                      child: Center(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 40),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              SvgPicture.asset(
-                                'assets/icons/books.svg',
-                                width: 160,
-                                height: 160,
-                              ),
-                              const SizedBox(height: 32),
-                              Text(
-                                'Oops! No pages found',
-                                style: AppTextStyles.headlineMedium.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.textPrimary,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                vm.error ?? 'This story does not have any pages loaded yet. Please check back later or try reading another story.',
-                                style: AppTextStyles.bodyMedium.copyWith(
-                                  color: AppColors.textSecondary,
-                                  height: 1.5,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                              const SizedBox(height: 36),
-                              FilledButton.icon(
-                                onPressed: () => context.pop(),
-                                icon: const Icon(Icons.arrow_back_rounded, size: 20),
-                                label: const Text('Go Back'),
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: AppColors.primary,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  elevation: 0,
-                                ),
-                              ),
-                              const SizedBox(height: 60),
-                            ],
+                      child: Stack(
+                        alignment: Alignment.topCenter,
+                        children: [
+                          PageView.builder(
+                            controller: _pageController,
+                            itemCount: vm.pages.length,
+                            onPageChanged: (index) {
+                              if (_isHandlingAudioSync) return;
+                              vm.goToPage(index);
+                              if (_useRealAudio) {
+                                final seekTarget = Duration(
+                                  milliseconds:
+                                      (vm.getPageSeekSeconds(index) * 1000)
+                                          .toInt(),
+                                );
+                                _audioService.seek(seekTarget);
+                              } else {
+                                setState(() {
+                                  _mockPositionSeconds = index * 15.0;
+                                });
+                              }
+                            },
+                            itemBuilder: (_, index) {
+                              final page = vm.pages[index];
+                              return _buildPageContent(vm, page);
+                            },
                           ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }
-
-          return Scaffold(
-            body: SafeArea(
-              bottom: false,
-              child: Column(
-                children: [
-                  // Custom top app bar
-                  _buildTopBar(context, vm),
-                  // Page content
-                  Expanded(
-                    child: Stack(
-                      alignment: Alignment.topCenter,
-                      children: [
-                        PageView.builder(
-                          controller: _pageController,
-                          itemCount: vm.pages.length,
-                          onPageChanged: (index) {
-                            if (_isHandlingAudioSync) return;
-                            vm.goToPage(index);
-                            if (_useRealAudio) {
-                              final seekTarget = Duration(
-                                milliseconds: (vm.pages[index].audioSeekSeconds * 1000).toInt(),
-                              );
-                              _audioService.seek(seekTarget);
-                            } else {
-                              setState(() {
-                                _mockPositionSeconds = index * 15.0;
-                              });
-                            }
-                          },
-                          itemBuilder: (_, index) {
-                            final page = vm.pages[index];
-                            return _buildPageContent(vm, page);
-                          },
-                        ),
-                        Positioned(
-                          top: 16,
-                          child: IgnorePointer(
-                            child: AnimatedOpacity(
-                              opacity: _showPageIndicator ? 1.0 : 0.0,
-                              duration: const Duration(milliseconds: 300),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                decoration: BoxDecoration(
-                                  color: isDark
-                                      ? AppColors.surface.withValues(alpha: 0.9)
-                                      : Colors.white.withValues(alpha: 0.9),
-                                  borderRadius: BorderRadius.circular(100),
-                                  border: Border.all(
-                                    color: isDark
-                                        ? Colors.white.withValues(alpha: 0.12)
-                                        : AppColors.textHint.withValues(alpha: 0.15),
-                                    width: 1,
+                          Positioned(
+                            top: 16,
+                            child: IgnorePointer(
+                              child: AnimatedOpacity(
+                                opacity: _showPageIndicator ? 1.0 : 0.0,
+                                duration: const Duration(milliseconds: 300),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 8,
                                   ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 4),
+                                  decoration: BoxDecoration(
+                                    color: isDark
+                                        ? AppColors.surface.withValues(
+                                            alpha: 0.9,
+                                          )
+                                        : Colors.white.withValues(alpha: 0.9),
+                                    borderRadius: BorderRadius.circular(100),
+                                    border: Border.all(
+                                      color: isDark
+                                          ? Colors.white.withValues(alpha: 0.12)
+                                          : AppColors.textHint.withValues(
+                                              alpha: 0.15,
+                                            ),
+                                      width: 1,
                                     ),
-                                  ],
-                                ),
-                                child: Text(
-                                  '${vm.currentPageIndex + 1} / ${vm.totalPages}',
-                                  style: AppTextStyles.labelSmall.copyWith(
-                                    color: AppColors.textPrimary,
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 12,
-                                    letterSpacing: 0.5,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(
+                                          alpha: isDark ? 0.2 : 0.05,
+                                        ),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Text(
+                                    '${vm.currentPageIndex + 1} / ${vm.totalPages}',
+                                    style: AppTextStyles.labelSmall.copyWith(
+                                      color: AppColors.textPrimary,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 12,
+                                      letterSpacing: 0.5,
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            bottomNavigationBar: _buildAudiobookController(),
-          );
-        },
+              bottomNavigationBar: _buildAudiobookController(),
+            );
+          },
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildTopBar(BuildContext context, ReaderViewModel vm) {
     final themeVM = context.watch<ThemeViewModel>();
@@ -600,7 +643,9 @@ class _ReaderScreenState extends State<ReaderScreen> {
           ),
           IconButton(
             icon: Icon(
-              themeVM.isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+              themeVM.isDarkMode
+                  ? Icons.light_mode_rounded
+                  : Icons.dark_mode_rounded,
             ),
             onPressed: () {
               themeVM.toggleTheme();
@@ -626,8 +671,28 @@ class _ReaderScreenState extends State<ReaderScreen> {
     );
   }
 
+  String _getIllustrationUrl(String? rawUrlOrPath) {
+    if (rawUrlOrPath == null || rawUrlOrPath.isEmpty) return '';
+
+    String path = rawUrlOrPath;
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      if (path.contains('/storage/v1/object/')) {
+        return path;
+      }
+      final uri = Uri.tryParse(path);
+      if (uri != null) {
+        path = '${uri.host}${uri.path}';
+      } else {
+        path = path.replaceFirst(RegExp(r'https?://'), '');
+      }
+    }
+
+    return '${SupabaseConstants.url}/storage/v1/object/public/${SupabaseConstants.illustrationsBucket}/$path';
+  }
+
   Widget _buildPageContent(ReaderViewModel vm, BookPage page) {
     final isDark = context.watch<ThemeViewModel>().isDarkMode;
+    final imgUrl = _getIllustrationUrl(page.imageUrl);
     return Center(
       child: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -657,11 +722,11 @@ class _ReaderScreenState extends State<ReaderScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (page.imageUrl != null && page.imageUrl!.isNotEmpty) ...[
+              if (imgUrl.isNotEmpty) ...[
                 ClipRRect(
                   borderRadius: BorderRadius.circular(20),
                   child: CachedNetworkImage(
-                    imageUrl: page.imageUrl!,
+                    imageUrl: imgUrl,
                     fit: BoxFit.cover,
                     placeholder: (_, _) => Container(
                       height: 220,
@@ -682,7 +747,9 @@ class _ReaderScreenState extends State<ReaderScreen> {
                   fontSize: context.watch<ThemeViewModel>().storyTextSize,
                   height: 1.6,
                   letterSpacing: 0.1,
-                  color: isDark ? AppColors.textPrimary : const Color(0xFF2E2C29),
+                  color: isDark
+                      ? AppColors.textPrimary
+                      : const Color(0xFF2E2C29),
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -701,9 +768,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
     final hasAudio = _vm.hasAudio;
 
     return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-      ),
+      decoration: BoxDecoration(color: AppColors.surface),
       child: SafeArea(
         top: false,
         child: Column(
@@ -718,8 +783,12 @@ class _ReaderScreenState extends State<ReaderScreen> {
                     ? const RoundSliderThumbShape(enabledThumbRadius: 8)
                     : const RoundSliderThumbShape(enabledThumbRadius: 0),
                 thumbColor: hasAudio ? AppColors.primary : Colors.transparent,
-                activeTrackColor: hasAudio ? AppColors.primary : AppColors.textHint.withValues(alpha: 0.2),
-                inactiveTrackColor: AppColors.textHint.withValues(alpha: isDark ? 0.15 : 0.1),
+                activeTrackColor: hasAudio
+                    ? AppColors.primary
+                    : AppColors.textHint.withValues(alpha: 0.2),
+                inactiveTrackColor: AppColors.textHint.withValues(
+                  alpha: isDark ? 0.15 : 0.1,
+                ),
                 overlayShape: SliderComponentShape.noOverlay,
               ),
               child: SizedBox(
@@ -740,20 +809,28 @@ class _ReaderScreenState extends State<ReaderScreen> {
                 children: [
                   Text(
                     hasAudio
-                        ? _formatDuration(Duration(milliseconds: (pos * 1000).toInt()))
+                        ? _formatDuration(
+                            Duration(milliseconds: (pos * 1000).toInt()),
+                          )
                         : '-:-',
                     style: TextStyle(
-                      color: hasAudio ? AppColors.textSecondary : AppColors.textHint,
+                      color: hasAudio
+                          ? AppColors.textSecondary
+                          : AppColors.textHint,
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   Text(
                     hasAudio
-                        ? _formatDuration(Duration(milliseconds: (dur * 1000).toInt()))
+                        ? _formatDuration(
+                            Duration(milliseconds: (dur * 1000).toInt()),
+                          )
                         : '-:-',
                     style: TextStyle(
-                      color: hasAudio ? AppColors.textSecondary : AppColors.textHint,
+                      color: hasAudio
+                          ? AppColors.textSecondary
+                          : AppColors.textHint,
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                     ),
@@ -769,10 +846,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   // Skip to Start (En Baş)
-                  _controlBtn(
-                    icon: AppIcons.skipBack,
-                    onTap: _skipToStart,
-                  ),
+                  _controlBtn(icon: AppIcons.skipBack, onTap: _skipToStart),
                   // Previous Page
                   _controlBtn(
                     icon: AppIcons.arrowLeft,
@@ -791,10 +865,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                     onTap: _vm.isLastPage ? null : _next,
                   ),
                   // Skip to End (En Son)
-                  _controlBtn(
-                    icon: AppIcons.skipForward,
-                    onTap: _skipToEnd,
-                  ),
+                  _controlBtn(icon: AppIcons.skipForward, onTap: _skipToEnd),
                 ],
               ),
             ),
@@ -818,11 +889,11 @@ class _ReaderScreenState extends State<ReaderScreen> {
         decoration: BoxDecoration(
           color: isPrimary
               ? (onTap != null
-                  ? AppColors.primary
-                  : AppColors.textHint.withValues(alpha: 0.2))
+                    ? AppColors.primary
+                    : AppColors.textHint.withValues(alpha: 0.2))
               : onTap != null
-                  ? AppColors.primary.withValues(alpha: 0.08)
-                  : AppColors.surfaceVariant.withValues(alpha: 0.2),
+              ? AppColors.primary.withValues(alpha: 0.08)
+              : AppColors.surfaceVariant.withValues(alpha: 0.2),
           shape: BoxShape.circle,
           boxShadow: isPrimary && onTap != null
               ? [
@@ -838,12 +909,10 @@ class _ReaderScreenState extends State<ReaderScreen> {
           icon,
           size: size,
           color: isPrimary
-              ? (onTap != null
-                  ? Colors.white
-                  : AppColors.textHint)
+              ? (onTap != null ? Colors.white : AppColors.textHint)
               : onTap != null
-                  ? AppColors.primary
-                  : AppColors.textHint,
+              ? AppColors.primary
+              : AppColors.textHint,
         ),
       ),
     );
@@ -868,7 +937,8 @@ class FullWidthTrackShape extends RectangularSliderTrackShape {
   }) {
     final double trackHeight = sliderTheme.trackHeight ?? 2.0;
     final double trackLeft = offset.dx;
-    final double trackTop = offset.dy; // Align with y=0 of the Slider bounding box
+    final double trackTop =
+        offset.dy; // Align with y=0 of the Slider bounding box
     final double trackWidth = parentBox.size.width;
     return Rect.fromLTWH(trackLeft, trackTop, trackWidth, trackHeight);
   }

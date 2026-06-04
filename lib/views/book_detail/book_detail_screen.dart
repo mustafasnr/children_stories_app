@@ -406,117 +406,95 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
     SubscriptionViewModel subVM,
   ) {
     final book = vm.book!;
-    final canRead = !book.isPremium || subVM.isPremium;
+    final isPremiumLocked = book.isPremium && !subVM.isPremium;
 
-    return Column(
-      children: [
-        // Read button
-        GestureDetector(
-          onTap: () {
-            if (canRead) {
-              context.push('/reader/${book.id}');
-            } else {
-              final authVM = context.read<AuthViewModel>();
-              if (authVM.isAnonymous) {
-                ToastService.showInfo('Please sign in first to access Premium content');
-                context.push('/login?upgrade=true');
-              } else {
-                AdaptyService.showPaywall(context);
-              }
-            }
-          },
-          child: Container(
-            width: double.infinity,
-            height: 56,
-            decoration: BoxDecoration(
-              gradient: canRead ? AppColors.primaryGradient : null,
-              color: canRead ? null : AppColors.textHint.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: canRead
-                  ? [
-                      BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.3),
-                        blurRadius: 16,
-                        offset: const Offset(0, 6),
-                      ),
-                    ]
-                  : [],
-            ),
-            child: Center(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    canRead ? Icons.menu_book_rounded : Icons.lock_rounded,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    canRead ? 'Read Now' : 'Unlock to Read',
-                    style: AppTextStyles.buttonLarge.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
+    if (isPremiumLocked) {
+      return GestureDetector(
+        onTap: () {
+          final authVM = context.read<AuthViewModel>();
+          if (authVM.isAnonymous) {
+            ToastService.showInfo('Please sign in first to access Premium content');
+            context.push('/login?upgrade=true');
+          } else {
+            AdaptyService.showPaywall(context);
+          }
+        },
+        child: Container(
+          width: double.infinity,
+          height: 56,
+          decoration: BoxDecoration(
+            gradient: AppColors.premiumGradient,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.premium.withValues(alpha: 0.35),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
               ),
+            ],
+          ),
+          child: Center(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.lock_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  'Unlock to Read Book',
+                  style: AppTextStyles.buttonLarge.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
-        // Audio button (if available)
-        if (vm.hasAudio) ...[
-          const SizedBox(height: 12),
-          GestureDetector(
-            onTap: () {
-              if (subVM.isPremium) {
-                context.push('/reader/${book.id}');
-              } else {
-                final authVM = context.read<AuthViewModel>();
-                if (authVM.isAnonymous) {
-                  ToastService.showInfo('Please sign in first to access Premium content');
-                  context.push('/login?upgrade=true');
-                } else {
-                  AdaptyService.showPaywall(context);
-                }
-              }
-            },
-            child: Container(
-              width: double.infinity,
-              height: 56,
-              decoration: BoxDecoration(
-                color: Colors.transparent,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.primary, width: 2),
+      );
+    }
+
+    // Otherwise, the user has access (free book, or premium user)
+    return GestureDetector(
+      onTap: () => context.push('/reader/${book.id}'),
+      child: Container(
+        width: double.infinity,
+        height: 56,
+        decoration: BoxDecoration(
+          gradient: AppColors.primaryGradient,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.3),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Center(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.menu_book_rounded,
+                color: Colors.white,
+                size: 20,
               ),
-              child: Center(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      subVM.isPremium
-                          ? Icons.headphones_rounded
-                          : Icons.lock_rounded,
-                      color: AppColors.primary,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 10),
-                    Text(
-                      subVM.isPremium
-                          ? 'Listen Narration'
-                          : '🎧 Audio (Premium)',
-                      style: AppTextStyles.buttonLarge.copyWith(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
+              const SizedBox(width: 10),
+              Text(
+                'Read Now',
+                style: AppTextStyles.buttonLarge.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-            ),
+            ],
           ),
-        ],
-      ],
+        ),
+      ),
     );
   }
 }

@@ -87,50 +87,136 @@ Deno.serve(async (req) => {
     } 
     
     else if (action === 'create_page') {
-      // 1. Insert into pages table
-      const { data: page, error: pageError } = await supabaseClient
-        .from('pages')
-        .insert({
-          book_id: data.book_id,
-          page_number: data.page_number,
-          image_url: data.image_url,
-        })
-        .select()
-        .single()
+      const bookId = data.book_id;
+      const pageNumber = data.page_number;
+      const imageUrl = data.image_url;
+      const translations = data.translations || [];
 
-      if (pageError) throw pageError
+      // We need to insert/update the page inside pages_data for each translated language
+      const results = [];
+      for (const t of translations) {
+        const langCode = t.language_code;
+        const textContent = t.text_content;
+        const audioSeekSeconds = t.audio_seek_seconds ?? 0.0;
 
-      // 2. Insert page translations if provided
-      if (data.translations && data.translations.length > 0) {
-        const translationsToInsert = data.translations.map((t: any) => ({
-          page_id: page.id,
-          language_code: t.language_code,
-          text_content: t.text_content,
-          audio_seek_seconds: t.audio_seek_seconds ?? 0.0,
-        }))
+        // Fetch existing row
+        const { data: existingRow } = await supabaseClient
+          .from('pages')
+          .select('id, pages_data')
+          .eq('book_id', bookId)
+          .eq('language_code', langCode)
+          .maybeSingle();
 
-        const { error: transError } = await supabaseClient
-          .from('page_translations')
-          .insert(translationsToInsert)
+        let pagesList = existingRow?.pages_data || [];
+        if (!Array.isArray(pagesList)) {
+          pagesList = [];
+        }
 
-        if (transError) throw transError
+        // Check if page already exists in the list
+        const pageIdx = pagesList.findIndex((p: any) => p.page_number === pageNumber);
+        const newPageObj = {
+          page_number: pageNumber,
+          image_url: imageUrl,
+          text_content: textContent,
+          audio_seek_seconds: audioSeekSeconds,
+        };
+
+        if (pageIdx !== -1) {
+          pagesList[pageIdx] = newPageObj;
+        } else {
+          pagesList.push(newPageObj);
+        }
+
+        // Sort by page_number
+        pagesList.sort((a: any, b: any) => a.page_number - b.page_number);
+
+        // Upsert back
+        const { data: pageRow, error: pageError } = await supabaseClient
+          .from('pages')
+          .upsert({
+            book_id: bookId,
+            language_code: langCode,
+            pages_data: pagesList,
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'book_id,language_code' })
+          .select()
+          .single();
+
+        if (pageError) throw pageError;
+        results.push(pageRow);
       }
 
-      // 3. Update page_count in books table automatically
-      const { count } = await supabaseClient
+      // Update page_count in books table automatically based on the max count of pages across translations
+      const { data: pageRows } = await supabaseClient
         .from('pages')
-        .select('*', { count: 'exact', head: true })
-        .eq('book_id', data.book_id)
+        .select('pages_data')
+        .eq('book_id', bookId);
+
+      let maxPages = 0;
+      if (pageRows) {
+        for (const row of pageRows) {
+          if (Array.isArray(row.pages_data) && row.pages_data.length > maxPages) {
+            maxPages = row.pages_data.length;
+          }
+        }
+      }
 
       await supabaseClient
         .from('books')
-        .update({ page_count: count ?? 0 })
-        .eq('id', data.book_id)
+        .update({ page_count: maxPages })
+        .eq('id', bookId);
 
-      return new Response(JSON.stringify({ success: true, page }), {
+      return new Response(JSON.stringify({ success: true, results }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
-      })
+      });
+    }
+
+    else if (action === 'save_book_pages') {
+      const bookId = data.book_id;
+      const langCode = data.language_code;
+      const pages = data.pages || []; // Array of { page_number, image_url, text_content, audio_seek_seconds }
+
+      // Sort by page_number to ensure correct ordering
+      pages.sort((a: any, b: any) => a.page_number - b.page_number);
+
+      const { data: pageRow, error: pageError } = await supabaseClient
+        .from('pages')
+        .upsert({
+          book_id: bookId,
+          language_code: langCode,
+          pages_data: pages,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'book_id,language_code' })
+        .select()
+        .single();
+
+      if (pageError) throw pageError;
+
+      // Update page_count in books table automatically based on the max count of pages across translations
+      const { data: pageRows } = await supabaseClient
+        .from('pages')
+        .select('pages_data')
+        .eq('book_id', bookId);
+
+      let maxPages = 0;
+      if (pageRows) {
+        for (const row of pageRows) {
+          if (Array.isArray(row.pages_data) && row.pages_data.length > maxPages) {
+            maxPages = row.pages_data.length;
+          }
+        }
+      }
+
+      await supabaseClient
+        .from('books')
+        .update({ page_count: maxPages })
+        .eq('id', bookId);
+
+      return new Response(JSON.stringify({ success: true, pageRow }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      });
     } 
     
     else if (action === 'create_audio') {

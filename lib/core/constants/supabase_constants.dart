@@ -13,7 +13,6 @@ class SupabaseConstants {
   static const String booksTable = 'books';
   static const String bookTranslationsTable = 'book_translations';
   static const String pagesTable = 'pages';
-  static const String pageTranslationsTable = 'page_translations';
   static const String bookAudioTable = 'book_audio';
   static const String profilesTable = 'profiles';
 

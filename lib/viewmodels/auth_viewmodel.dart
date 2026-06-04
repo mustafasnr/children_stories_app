@@ -75,28 +75,11 @@ class AuthViewModel extends ChangeNotifier {
       _localGender = prefs.getString('onboarding_gender');
 
       if (_currentUser != null) {
-        try {
-          // Fetch user details from the backend to verify the session/account exists
-          final response = await Supabase.instance.client.auth.getUser();
-          _currentUser = response.user;
-        } on AuthException catch (e) {
-          debugPrint('[AuthVM] AuthException checking session validity: $e');
-          // If the auth server explicitly rejects the user (e.g. invalid grant, user not found, forbidden), we log out.
-          final isUserDeleted = e.statusCode == '403' || 
-                                e.statusCode == '404' || 
-                                e.statusCode == '400' || 
-                                e.message.toLowerCase().contains('user not found') ||
-                                e.message.toLowerCase().contains('invalid user') ||
-                                e.message.toLowerCase().contains('invalid_grant');
-          if (isUserDeleted) {
-            debugPrint('[AuthVM] Session invalid or user deleted on backend. Clearing session.');
-            await signOut();
-            return;
-          }
-        } catch (e) {
-          debugPrint('[AuthVM] Unexpected error during getUser: $e');
-        }
-
+        // We do not call Supabase.instance.client.auth.getUser() manually on startup.
+        // If the session is expired (e.g. after 2-3 hours), Supabase will automatically
+        // trigger an asynchronous token refresh. Calling getUser() concurrently here
+        // causes a race condition leading to GoTrue's Token Rotation Reuse Detection (invalid_grant 400),
+        // which would log the user out. The SDK's auto-refresh is fully sufficient.
         await _loadProfile(_currentUser!.id);
         if (_profile?.childAge != null) {
           _hasFinishedAuthSelection = true;

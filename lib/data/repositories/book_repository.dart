@@ -91,11 +91,23 @@ class BookRepository {
   ) async {
     final data = await _client
         .from(SupabaseConstants.pagesTable)
-        .select('*, page_translations!inner(text_content, audio_seek_seconds)')
+        .select('id, book_id, pages_data, created_at')
         .eq('book_id', bookId)
-        .eq('page_translations.language_code', languageCode)
-        .order('page_number');
-    return (data as List).map((e) => BookPage.fromJson(e)).toList();
+        .eq('language_code', languageCode)
+        .maybeSingle();
+
+    if (data == null) return [];
+
+    final pagesList = data['pages_data'] as List<dynamic>? ?? [];
+    final bookIdStr = data['book_id'] as String;
+    final createdAtStr = data['created_at'] as String;
+
+    return pagesList.map((e) {
+      final map = Map<String, dynamic>.from(e as Map);
+      map['book_id'] = bookIdStr;
+      map['created_at'] = createdAtStr;
+      return BookPage.fromJson(map);
+    }).toList();
   }
 
   // ─── Audio ──────────────────────────────────────────────────────────────
