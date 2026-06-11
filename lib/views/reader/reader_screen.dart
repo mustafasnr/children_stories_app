@@ -6,10 +6,11 @@ import 'package:children_stories/core/constants/app_icons.dart';
 import 'package:children_stories/core/constants/supabase_constants.dart';
 import 'package:children_stories/core/services/audio_service.dart';
 import 'package:children_stories/data/models/book_page_model.dart';
+import 'package:children_stories/l10n/app_localizations.dart';
 import 'package:children_stories/viewmodels/home_viewmodel.dart';
 import 'package:children_stories/viewmodels/reader_viewmodel.dart';
 import 'package:children_stories/viewmodels/subscription_viewmodel.dart';
-import 'package:children_stories/viewmodels/theme_viewmodel.dart';
+import 'package:children_stories/viewmodels/settings_viewmodel.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -305,12 +306,13 @@ class _ReaderScreenState extends State<ReaderScreen> {
   }
 
   void _showTextSizeDialog(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        return Consumer<ThemeViewModel>(
-          builder: (context, themeVM, _) {
+        return Consumer<SettingsViewModel>(
+          builder: (context, settingsVM, _) {
             return Container(
               decoration: BoxDecoration(
                 color: AppColors.surface,
@@ -350,7 +352,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                       ),
                       const SizedBox(width: 10),
                       Text(
-                        'Story Font Size',
+                        localizations.reader_font_size_title,
                         style: AppTextStyles.titleMedium.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -378,14 +380,16 @@ class _ReaderScreenState extends State<ReaderScreen> {
                               alpha: 0.12,
                             ),
                             trackHeight: 4,
+                            activeTickMarkColor: Colors.transparent,
+                            inactiveTickMarkColor: Colors.transparent,
                           ),
                           child: Slider(
-                            value: themeVM.storyTextSizeStep,
+                            value: settingsVM.storyTextSizeStep,
                             min: 1.0,
                             max: 10.0,
                             divisions: 9,
                             onChanged: (val) {
-                              themeVM.setStoryTextSizeStep(val);
+                              settingsVM.setStoryTextSizeStep(val);
                             },
                           ),
                         ),
@@ -403,7 +407,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                   const SizedBox(height: 12),
                   Center(
                     child: Text(
-                      'Preview Size: ${themeVM.storyTextSize.toInt()} px',
+                      localizations.reader_font_size_preview(settingsVM.storyTextSize.toInt()),
                       style: AppTextStyles.labelMedium.copyWith(
                         color: AppColors.textSecondary,
                       ),
@@ -420,7 +424,8 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = context.watch<ThemeViewModel>().isDarkMode;
+    final isDark = context.watch<SettingsViewModel>().isDarkMode;
+    final localizations = AppLocalizations.of(context)!;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -457,7 +462,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                                 ),
                                 const SizedBox(height: 32),
                                 Text(
-                                  'Oops! No pages found',
+                                  localizations.reader_no_pages_title,
                                   style: AppTextStyles.headlineMedium.copyWith(
                                     fontWeight: FontWeight.w800,
                                     color: AppColors.textPrimary,
@@ -466,8 +471,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                                 ),
                                 const SizedBox(height: 12),
                                 Text(
-                                  vm.error ??
-                                      'This story does not have any pages loaded yet. Please check back later or try reading another story.',
+                                  vm.error ?? localizations.reader_no_pages_description,
                                   style: AppTextStyles.bodyMedium.copyWith(
                                     color: AppColors.textSecondary,
                                     height: 1.5,
@@ -481,7 +485,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                                     Icons.arrow_back_rounded,
                                     size: 20,
                                   ),
-                                  label: const Text('Go Back'),
+                                  label: Text(localizations.reader_go_back),
                                   style: FilledButton.styleFrom(
                                     backgroundColor: AppColors.primary,
                                     foregroundColor: Colors.white,
@@ -607,7 +611,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
   }
 
   Widget _buildTopBar(BuildContext context, ReaderViewModel vm) {
-    final themeVM = context.watch<ThemeViewModel>();
+    final settingsVM = context.watch<SettingsViewModel>();
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       decoration: BoxDecoration(
@@ -643,12 +647,12 @@ class _ReaderScreenState extends State<ReaderScreen> {
           ),
           IconButton(
             icon: Icon(
-              themeVM.isDarkMode
+              settingsVM.isDarkMode
                   ? Icons.light_mode_rounded
                   : Icons.dark_mode_rounded,
             ),
             onPressed: () {
-              themeVM.toggleTheme();
+              settingsVM.toggleTheme();
             },
             style: IconButton.styleFrom(
               backgroundColor: AppColors.surfaceVariant.withValues(alpha: 0.4),
@@ -691,11 +695,11 @@ class _ReaderScreenState extends State<ReaderScreen> {
   }
 
   Widget _buildPageContent(ReaderViewModel vm, BookPage page) {
-    final isDark = context.watch<ThemeViewModel>().isDarkMode;
+    final isDark = context.watch<SettingsViewModel>().isDarkMode;
     final imgUrl = _getIllustrationUrl(page.imageUrl);
     return Center(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Container(
           width: double.infinity,
           constraints: const BoxConstraints(maxWidth: 600),
@@ -744,7 +748,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
               Text(
                 page.textContent,
                 style: AppTextStyles.readerText.copyWith(
-                  fontSize: context.watch<ThemeViewModel>().storyTextSize,
+                  fontSize: context.watch<SettingsViewModel>().storyTextSize,
                   height: 1.6,
                   letterSpacing: 0.1,
                   color: isDark
@@ -774,74 +778,65 @@ class _ReaderScreenState extends State<ReaderScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Full-width Spotify-style seek slider at y=0 (top edge)
-            SliderTheme(
-              data: SliderThemeData(
-                trackHeight: 2.0,
-                trackShape: FullWidthTrackShape(),
-                thumbShape: hasAudio
-                    ? const RoundSliderThumbShape(enabledThumbRadius: 8)
-                    : const RoundSliderThumbShape(enabledThumbRadius: 0),
-                thumbColor: hasAudio ? AppColors.primary : Colors.transparent,
-                activeTrackColor: hasAudio
-                    ? AppColors.primary
-                    : AppColors.textHint.withValues(alpha: 0.2),
-                inactiveTrackColor: AppColors.textHint.withValues(
-                  alpha: isDark ? 0.15 : 0.1,
+            if (hasAudio) ...[
+              // Full-width Spotify-style seek slider at y=0 (top edge)
+              SliderTheme(
+                data: SliderThemeData(
+                  trackHeight: 2.0,
+                  trackShape: FullWidthTrackShape(),
+                  thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
+                  thumbColor: AppColors.primary,
+                  activeTrackColor: AppColors.primary,
+                  inactiveTrackColor: AppColors.textHint.withValues(
+                    alpha: isDark ? 0.15 : 0.1,
+                  ),
+                  overlayShape: SliderComponentShape.noOverlay,
                 ),
-                overlayShape: SliderComponentShape.noOverlay,
-              ),
-              child: SizedBox(
-                height: 12,
-                child: Slider(
-                  value: hasAudio ? pos.clamp(0.0, dur > 0 ? dur : 1.0) : 0.0,
-                  max: hasAudio && dur > 0 ? dur : 1.0,
-                  onChanged: hasAudio ? _seekTo : null,
+                child: SizedBox(
+                  height: 12,
+                  child: Slider(
+                    value: pos.clamp(0.0, dur > 0 ? dur : 1.0),
+                    max: dur > 0 ? dur : 1.0,
+                    onChanged: _seekTo,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 6),
-            // Time Labels
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    hasAudio
-                        ? _formatDuration(
-                            Duration(milliseconds: (pos * 1000).toInt()),
-                          )
-                        : '-:-',
-                    style: TextStyle(
-                      color: hasAudio
-                          ? AppColors.textSecondary
-                          : AppColors.textHint,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
+              const SizedBox(height: 6),
+              // Time Labels
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _formatDuration(
+                        Duration(milliseconds: (pos * 1000).toInt()),
+                      ),
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  Text(
-                    hasAudio
-                        ? _formatDuration(
-                            Duration(milliseconds: (dur * 1000).toInt()),
-                          )
-                        : '-:-',
-                    style: TextStyle(
-                      color: hasAudio
-                          ? AppColors.textSecondary
-                          : AppColors.textHint,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
+                    Text(
+                      _formatDuration(
+                        Duration(milliseconds: (dur * 1000).toInt()),
+                      ),
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 10),
+              const SizedBox(height: 10),
+            ] else
+              const SizedBox(height: 12),
             // Podcast/Audiobook Control Row using Phosphor icons via AppIcons
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [

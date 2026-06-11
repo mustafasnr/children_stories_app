@@ -130,6 +130,16 @@ class AuthViewModel extends ChangeNotifier {
     try {
       await _profileRepository.updateChildInfo(uid, age: age, gender: gender);
       await _loadProfile(uid);
+      
+      _localAge = age;
+      _localGender = gender;
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('onboarding_age', age);
+      if (gender != null) {
+        await prefs.setString('onboarding_gender', gender);
+      } else {
+        await prefs.remove('onboarding_gender');
+      }
     } catch (e) {
       debugPrint('[AuthVM] updateOnboardingData error: $e');
     } finally {
@@ -233,6 +243,15 @@ class AuthViewModel extends ChangeNotifier {
   Future<void> signOut() async {
     _setLoading(true);
     try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('onboarding_completed');
+      await prefs.remove('onboarding_age');
+      await prefs.remove('onboarding_gender');
+      
+      _localOnboardingCompleted = false;
+      _localAge = null;
+      _localGender = null;
+
       await _repository.signOut();
       _profile = null;
       _currentUser = null;

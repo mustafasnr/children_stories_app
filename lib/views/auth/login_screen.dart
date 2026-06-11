@@ -1,21 +1,16 @@
-import 'package:children_stories/app/app.dart';
 import 'package:children_stories/app/theme/app_text_styles.dart';
-import 'package:children_stories/viewmodels/auth_viewmodel.dart';
-import 'package:children_stories/core/services/toast_service.dart';
-import 'package:children_stories/views/auth/widgets/social_login_button.dart';
+import 'package:children_stories/l10n/app_localizations.dart';
+import 'package:children_stories/views/auth/widgets/login_card.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:io';
-import 'dart:ui';
-import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -74,7 +69,7 @@ class LoginScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Children Stories',
+                      localizations.login_title,
                       style: AppTextStyles.displayLarge.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w900,
@@ -83,14 +78,14 @@ class LoginScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'Magical stories for curious minds',
+                      localizations.login_subtitle,
                       style: AppTextStyles.bodyMedium.copyWith(
                         color: Colors.white.withValues(alpha: 0.7),
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                     const Spacer(flex: 3),
-                    const _LoginCard(),
+                    const LoginCard(),
                     const Spacer(flex: 1),
                     const _TermsText(),
                   ],
@@ -139,6 +134,7 @@ class _TermsTextState extends State<_TermsText> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     return RichText(
       textAlign: TextAlign.center,
       text: TextSpan(
@@ -148,158 +144,27 @@ class _TermsTextState extends State<_TermsText> {
           height: 1.5,
         ),
         children: [
-          const TextSpan(text: 'By continuing you agree to our '),
+          TextSpan(text: localizations.login_by_continuing),
           TextSpan(
-            text: 'Terms of Service',
+            text: localizations.login_terms_of_service,
             recognizer: _termsRecognizer,
             style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.w600,
             ),
           ),
-          const TextSpan(text: '\nand '),
+          TextSpan(text: localizations.login_and),
           TextSpan(
-            text: 'Privacy Policy',
+            text: localizations.login_privacy_policy,
             recognizer: _privacyRecognizer,
             style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.w600,
             ),
           ),
-          const TextSpan(text: '.'),
+          TextSpan(text: localizations.login_agree_suffix),
         ],
       ),
-    );
-  }
-}
-
-class _LoginCard extends StatelessWidget {
-  const _LoginCard();
-
-  @override
-  Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final isUpgrade =
-        GoRouterState.of(context).uri.queryParameters['upgrade'] == 'true';
-    return Consumer<AuthViewModel>(
-      builder: (context, authVM, _) {
-        if (authVM.error != null) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            ToastService.showError(authVM.error!);
-            authVM.clearError();
-          });
-        }
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(28),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Container(
-              width: size.width * 0.75,
-              padding: const EdgeInsets.all(28),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.15),
-                  width: 1.0,
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Text(
-                    'Get Started',
-                    style: AppTextStyles.headlineMedium.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Sign in to start your reading adventure',
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: Colors.white.withValues(alpha: 0.6),
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 24),
-                  SocialLoginButton(
-                    label: isUpgrade
-                        ? 'Connect with Google'
-                        : 'Continue with Google',
-                    emoji: '🔵',
-                    svgPath: 'assets/icons/google_icon.svg',
-                    labelColor: Colors.black87,
-                    bgColor: Colors.white,
-                    isLoading: authVM.isLoading,
-                    onTap: authVM.isLoading
-                        ? null
-                        : () async {
-                            await authVM.signInWithGoogle();
-                            if (!context.mounted) return;
-                            if (authVM.isLoggedIn && authVM.error == null) {
-                              RestartWidget.restartApp(context);
-                            }
-                          },
-                  ),
-                  if (Platform.isIOS) ...[
-                    const SizedBox(height: 16),
-                    SocialLoginButton(
-                      label: isUpgrade
-                          ? 'Connect with Apple'
-                          : 'Continue with Apple',
-                      emoji: '🍎',
-                      labelColor: Colors.white,
-                      bgColor: Colors.black,
-                      isLoading: authVM.isLoading,
-                      onTap: authVM.isLoading
-                          ? null
-                          : () async {
-                              await authVM.signInWithApple();
-                              if (!context.mounted) return;
-                              if (authVM.isLoggedIn && authVM.error == null) {
-                                RestartWidget.restartApp(context);
-                              }
-                            },
-                    ),
-                  ],
-                  const SizedBox(height: 16),
-                  TextButton(
-                    onPressed: authVM.isLoading
-                        ? null
-                        : () async {
-                            if (authVM.isLoggedIn && authVM.isAnonymous) {
-                              if (context.canPop()) {
-                                context.pop();
-                              } else {
-                                context.go('/explore');
-                              }
-                            } else {
-                              await authVM.continueWithoutSignIn();
-                            }
-                          },
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.white.withValues(alpha: 0.85),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                    ),
-                    child: Text(
-                      isUpgrade ? 'Not Now' : 'Continue without signing in',
-                      style: AppTextStyles.titleMedium.copyWith(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
     );
   }
 }

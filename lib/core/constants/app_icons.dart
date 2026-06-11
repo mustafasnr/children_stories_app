@@ -24,7 +24,12 @@ class AppIcons {
   static IconData get genderMale => PhosphorIconsBold.genderMale;
   static IconData get genderNeuter => PhosphorIconsBold.user;
   static IconData get sparkle => PhosphorIconsBold.sparkle;
+  static IconData get sparkleFill => PhosphorIconsFill.sparkle;
   static IconData get textSize => PhosphorIconsBold.textT;
+
+  // Badges & Tag Icons
+  static IconData get premiumBadge => PhosphorIconsFill.crown;
+  static IconData get featuredBadge => PhosphorIconsBold.star;
 
   // Audio Player Icons
   static IconData get play => PhosphorIconsBold.play;

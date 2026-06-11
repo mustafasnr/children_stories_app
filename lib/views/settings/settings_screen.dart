@@ -1,5 +1,6 @@
 import 'package:children_stories/app/theme/app_colors.dart';
 import 'package:children_stories/app/theme/app_text_styles.dart';
+import 'package:children_stories/l10n/app_localizations.dart';
 import 'package:children_stories/viewmodels/auth_viewmodel.dart';
 import 'package:children_stories/viewmodels/profile_viewmodel.dart';
 import 'package:children_stories/viewmodels/subscription_viewmodel.dart';
@@ -60,6 +61,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         builder: (context, vm, _) {
           final authVM = context.read<AuthViewModel>();
           final subVM = context.watch<SubscriptionViewModel>();
+          final localizations = AppLocalizations.of(context)!;
           final isPremium = subVM.isPremium;
           final isAnonymous = authVM.isAnonymous;
           final user = authVM.currentUser;
@@ -72,7 +74,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               profile?.displayName ??
               user?.userMetadata?['full_name'] as String? ??
               user?.userMetadata?['name'] as String? ??
-              'Reader';
+              localizations.settings_default_reader_name;
 
           return Scaffold(
             appBar: AppBar(
@@ -80,8 +82,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               scrolledUnderElevation: 0,
               centerTitle: true,
               automaticallyImplyLeading: false,
+              toolbarHeight: kToolbarHeight,
               title: Text(
-                'Settings',
+                localizations.settings_title,
                 style: AppTextStyles.headlineLarge.copyWith(
                   color: Theme.of(context).colorScheme.onSurface,
                   fontWeight: FontWeight.w700,
@@ -90,7 +93,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             body: SingleChildScrollView(
               physics: const ClampingScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Column(
                 children: [
                   if (isAnonymous) ...[

@@ -1,3 +1,4 @@
+import 'package:children_stories/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -19,6 +20,7 @@ class MainScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final localizations = AppLocalizations.of(context)!;
 
     return PopScope(
       canPop: navigationShell.currentIndex == 0,
@@ -55,21 +57,21 @@ class MainScaffold extends StatelessWidget {
             elevation: 0,
             backgroundColor: Colors.transparent,
             indicatorColor: theme.colorScheme.primaryContainer,
-            destinations: const [
+            destinations: [
               NavigationDestination(
-                icon: Icon(Icons.explore_outlined),
-                selectedIcon: Icon(Icons.explore_rounded),
-                label: 'Explore',
+                icon: const Icon(Icons.explore_outlined),
+                selectedIcon: const Icon(Icons.explore_rounded),
+                label: localizations.nav_explore,
               ),
               NavigationDestination(
-                icon: Icon(Icons.bookmarks_outlined),
-                selectedIcon: Icon(Icons.bookmarks_rounded),
-                label: 'Library',
+                icon: const Icon(Icons.bookmarks_outlined),
+                selectedIcon: const Icon(Icons.bookmarks_rounded),
+                label: localizations.nav_library,
               ),
               NavigationDestination(
-                icon: Icon(Icons.settings_outlined),
-                selectedIcon: Icon(Icons.settings_rounded),
-                label: 'Settings',
+                icon: const Icon(Icons.settings_outlined),
+                selectedIcon: const Icon(Icons.settings_rounded),
+                label: localizations.nav_settings,
               ),
             ],
           ),

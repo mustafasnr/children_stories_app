@@ -1,9 +1,11 @@
 import 'package:children_stories/app/app.dart';
 import 'package:children_stories/app/theme/app_colors.dart';
 import 'package:children_stories/app/theme/app_text_styles.dart';
+import 'package:children_stories/l10n/app_localizations.dart';
 import 'package:children_stories/viewmodels/auth_viewmodel.dart';
-import 'package:children_stories/viewmodels/theme_viewmodel.dart';
+import 'package:children_stories/viewmodels/settings_viewmodel.dart';
 import 'package:children_stories/views/settings/widgets/app_language_selector.dart';
+import 'package:children_stories/views/settings/widgets/preferences_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -12,34 +14,37 @@ class SettingsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final authVM = context.read<AuthViewModel>();
-    final themeVM = context.watch<ThemeViewModel>();
+    final authVM = context.watch<AuthViewModel>();
+    final settingsVM = context.watch<SettingsViewModel>();
+    final localizations = AppLocalizations.of(context)!;
     final isAnonymous = authVM.isAnonymous;
 
     return Column(
       children: [
+        const PreferencesTile(),
+        const SizedBox(height: 12),
         _buildSwitchTile(
           context: context,
-          icon: themeVM.themeMode == ThemeMode.dark
+          icon: settingsVM.themeMode == ThemeMode.dark
               ? Icons.dark_mode_rounded
               : Icons.light_mode_rounded,
-          title: 'Dark Mode',
-          value: themeVM.themeMode == ThemeMode.dark,
+          title: localizations.settings_dark_mode,
+          value: settingsVM.themeMode == ThemeMode.dark,
           onChanged: (val) {
-            themeVM.setThemeMode(val ? ThemeMode.dark : ThemeMode.light);
+            settingsVM.setThemeMode(val ? ThemeMode.dark : ThemeMode.light);
           },
         ),
         const SizedBox(height: 12),
         _buildSwitchTile(
           context: context,
           icon: Icons.volume_up_rounded,
-          title: 'Story Sounds',
-          value: themeVM.storySoundsEnabled,
-          iconColor: themeVM.isDarkMode
+          title: localizations.settings_story_sounds,
+          value: settingsVM.storySoundsEnabled,
+          iconColor: settingsVM.isDarkMode
               ? const Color(0xFFFFB366)
               : const Color(0xFFF57C00),
           onChanged: (val) {
-            themeVM.setStorySoundsEnabled(val);
+            settingsVM.setStorySoundsEnabled(val);
           },
         ),
         const SizedBox(height: 12),
@@ -49,7 +54,7 @@ class SettingsSection extends StatelessWidget {
           _buildTile(
             context: context,
             icon: Icons.logout_rounded,
-            title: 'Sign Out',
+            title: localizations.settings_sign_out,
             iconColor: AppColors.error,
             textColor: AppColors.error,
             trailing: const SizedBox.shrink(),

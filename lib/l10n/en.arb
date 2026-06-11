@@ -4,7 +4,7 @@
   "app_language": "App Language",
   "select_language": "Select Language",
   "all_stories": "All Stories",
-  "featured": "✨ Featured",
+  "featured": "Featured",
   "coming_soon": "Coming Soon",
   "no_stories_yet": "No stories yet",
   "stories_coming_soon": "Stories for this language are coming soon!",
@@ -13,5 +13,174 @@
   "category_2": "Fairy Tales",
   "category_3": "Adventure",
   "category_4": "Animals",
-  "category_5": "Fantasy"
+  "category_5": "Fantasy",
+
+  "login_title": "Children Stories",
+  "login_subtitle": "Magical stories for curious minds",
+  "login_by_continuing": "By continuing you agree to our ",
+  "login_terms_of_service": "Terms of Service",
+  "login_and": "\nand ",
+  "login_privacy_policy": "Privacy Policy",
+  "login_agree_suffix": ".",
+  "login_get_started": "Get Started",
+  "login_card_subtitle": "Sign in to start your reading adventure",
+  "login_connect_google": "Connect",
+  "login_continue_google": "Continue",
+  "login_connect_apple": "Connect",
+  "login_continue_apple": "Continue",
+  "login_not_now": "Not Now",
+  "login_continue_without_sign_in": "Continue without signing in",
+  "login_google_key_mismatch_warning": "Google sign-in is currently unavailable because development and release keys do not match.",
+  "onboarding_age_title_3": "2 - 5 Years Old",
+  "onboarding_age_subtitle_3": "Picture books, lullabies & simple tales",
+  "onboarding_age_stories_3": "150+ Stories",
+  "onboarding_age_title_7": "6 - 9 Years Old",
+  "onboarding_age_subtitle_7": "Adventures, early readers & fairy tales",
+  "onboarding_age_stories_7": "350+ Stories",
+  "onboarding_age_title_11": "10 - 12 Years Old",
+  "onboarding_age_subtitle_11": "Chapter books, fantasy & mysteries",
+  "onboarding_age_stories_11": "200+ Stories",
+  "onboarding_age_question": "How old is the reader?",
+  "onboarding_age_description": "We personalize the reading levels, vocabulary, and stories based on age.",
+  "onboarding_gender_question": "Tell us about them",
+  "onboarding_gender_description": "Help us tailor recommended stories for your child.",
+  "gender_girl": "Girl",
+  "gender_girl_subtitle": "Recommended stories for girls",
+  "gender_boy": "Boy",
+  "gender_boy_subtitle": "Recommended stories for boys",
+  "gender_unspecified": "I don't want to specify",
+  "gender_unspecified_subtitle": "Show stories for everyone",
+  "onboarding_why_we_ask_button": "Why do we ask for this information?",
+  "onboarding_why_we_ask_title": "Why We Ask",
+  "onboarding_why_we_ask_content": "Every child is unique! By knowing their age and preferences, we can recommend stories that match their vocabulary level, interests, and developmental stage. Your data is kept private and used only to personalize their in-app experience.",
+  "onboarding_back": "Back",
+  "onboarding_continue": "Continue",
+  "onboarding_complete": "Complete",
+  "onboarding_got_it": "Got It!",
+  "preferences_title": "Preferences",
+  "preferences_subtitle": "Customize level & recommended stories",
+  "preferences_readers_age": "Reader's Age",
+  "preferences_readers_gender": "Reader's Gender",
+  "preferences_save_changes": "Save Changes",
+  "preferences_update_success": "Preferences updated successfully",
+  "preferences_update_failed": "Failed to update preferences: {error}",
+  "preferences_not_set": "Not Set",
+  "preferences_all": "All",
+  "preferences_age_format": "{age} Y/O",
+  "@preferences_age_format": {
+    "placeholders": {
+      "age": {
+        "type": "String"
+      }
+    }
+  },
+  "@preferences_update_failed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "settings_title": "Settings",
+  "settings_default_reader_name": "Reader",
+  "settings_dark_mode": "Dark Mode",
+  "settings_story_sounds": "Story Sounds",
+  "settings_sign_out": "Sign Out",
+  "settings_text_size": "Text Size",
+  "settings_text_size_small": "Small",
+  "settings_text_size_medium": "Medium",
+  "settings_text_size_large": "Large",
+  "settings_text_size_preview": "\"Once upon a time, in a magical forest...\"",
+  "settings_anon_upgrade_title_library": "Create Your Library",
+  "settings_anon_upgrade_desc_library": "Save your favorite stories and access them anytime, anywhere.",
+  "settings_anon_upgrade_title_audio": "Audio Narrations",
+  "settings_anon_upgrade_desc_audio": "Listen to high-quality voiceovers and narrations.",
+  "settings_anon_upgrade_title_sync": "Sync Across Devices",
+  "settings_anon_upgrade_desc_sync": "Never lose your reading progress or saved stats.",
+  "settings_anon_upgrade_button": "Sign In / Register",
+  "settings_manage_subscription": "Manage Subscription",
+  "settings_subscription_expires": "Expires: {date}",
+  "@settings_subscription_expires": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "settings_subscription_signin_warning": "Please sign in to access subscriptions. Tap to sign in.",
+  "settings_premium_active": "Premium Active",
+  "settings_free_plan": "Free Plan",
+  "settings_premium_active_desc": "All stories & audio unlocked",
+  "settings_free_plan_desc": "Upgrade to unlock everything",
+  "settings_premium_signin_warning": "Please sign in first to purchase Premium! Tap to sign in.",
+  "settings_upgrade_button": "Upgrade",
+  "explore_error_title": "Oops! Something went wrong",
+  "explore_error_description": "We couldn't load the stories. Please check your connection and try again.",
+  "explore_error_retry": "Try Again",
+  "library_title": "Library",
+  "library_guest_title": "Sign in to save stories",
+  "library_guest_description": "Keep track of your favorite stories and reading progress by creating an account.",
+  "library_guest_button": "Sign In / Sign Up",
+  "library_empty_title": "Your library is empty",
+  "library_empty_description": "Tap the bookmark icon on any story to save it here for quick access.",
+  "library_error_description": "We couldn't load your library. Please try again.",
+  "book_detail_not_found": "Book not found.",
+  "book_detail_bookmark_signin_warning": "Please sign in to bookmark stories. Tap to sign in.",
+  "book_detail_added_to_library": "Added to library! Tap to view.",
+  "book_detail_removed_from_library": "Removed from library",
+  "book_detail_badge_premium": "Premium",
+  "book_detail_badge_featured": "Featured",
+  "book_detail_stat_age": "Age",
+  "book_detail_stat_time": "Time",
+  "book_detail_stat_pages": "Pages",
+  "book_detail_stat_audio": "Audio",
+  "book_detail_about": "About this Story",
+  "book_detail_premium_signin_warning": "Please sign in first to access Premium content",
+  "book_detail_unlock_button": "Unlock to Read Book",
+  "book_detail_read_button": "Read Now",
+  "reader_font_size_title": "Story Font Size",
+  "reader_font_size_preview": "Preview Size: {size} px",
+  "@reader_font_size_preview": {
+    "placeholders": {
+      "size": {
+        "type": "int"
+      }
+    }
+  },
+  "reader_no_pages_title": "Oops! No pages found",
+  "reader_no_pages_description": "This story does not have any pages loaded yet. Please check back later or try reading another story.",
+  "reader_go_back": "Go Back",
+  "badge_premium": "Premium",
+  "badge_featured": "Featured",
+  "explore_select_language_voice": "Select Story Language & Voice",
+  "explore_story_count": "{count} Stories",
+  "@explore_story_count": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "explore_book_age_range": "{ageMin}–{ageMax} yrs",
+  "@explore_book_age_range": {
+    "placeholders": {
+      "ageMin": {
+        "type": "int"
+      },
+      "ageMax": {
+        "type": "int"
+      }
+    }
+  },
+  "explore_book_read_time": "{minutes} min read",
+  "@explore_book_read_time": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "nav_explore": "Explore",
+  "nav_library": "Library",
+  "nav_settings": "Settings"
 }

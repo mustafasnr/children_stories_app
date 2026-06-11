@@ -5,7 +5,7 @@ import 'package:children_stories/viewmodels/auth_viewmodel.dart';
 import 'package:children_stories/viewmodels/home_viewmodel.dart';
 import 'package:children_stories/viewmodels/library_viewmodel.dart';
 import 'package:children_stories/viewmodels/subscription_viewmodel.dart';
-import 'package:children_stories/viewmodels/theme_viewmodel.dart';
+import 'package:children_stories/viewmodels/settings_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:children_stories/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
@@ -22,7 +22,7 @@ class ChildrenStoriesApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => HomeViewModel()),
         ChangeNotifierProvider(create: (_) => LibraryViewModel()),
         ChangeNotifierProvider(create: (_) => SubscriptionViewModel()),
-        ChangeNotifierProvider(create: (_) => ThemeViewModel()),
+        ChangeNotifierProvider(create: (_) => SettingsViewModel()),
       ],
       child: const _AppContent(),
     );
@@ -49,11 +49,11 @@ class _AppContentState extends State<_AppContent> {
   @override
   Widget build(BuildContext context) {
     context.watch<AuthViewModel>();
-    final themeVM = context.watch<ThemeViewModel>();
+    final settingsVM = context.watch<SettingsViewModel>();
 
     // Change this variable to force a specific theme during development
-    // e.g. ThemeMode.light, ThemeMode.dark, or themeVM.themeMode
-    final activeThemeMode = themeVM.themeMode;
+    // e.g. ThemeMode.light, ThemeMode.dark, or settingsVM.themeMode
+    final activeThemeMode = settingsVM.themeMode;
 
     // Update dynamic AppColors current scheme based on activeThemeMode
     final isDark =
@@ -71,7 +71,7 @@ class _AppContentState extends State<_AppContent> {
       debugShowCheckedModeBanner: false,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      locale: const Locale('en'),
+      locale: settingsVM.locale,
     );
   }
 }

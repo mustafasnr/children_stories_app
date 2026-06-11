@@ -2,6 +2,7 @@ import 'package:children_stories/core/constants/app_icons.dart';
 import 'package:flutter/material.dart';
 
 class ToastService {
+  ToastService._();
   static final GlobalKey<NavigatorState> navigatorKey =
       GlobalKey<NavigatorState>();
 
@@ -82,7 +83,10 @@ class ToastService {
                     }
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                     decoration: BoxDecoration(
                       color: backgroundColor,
                       borderRadius: BorderRadius.circular(16),

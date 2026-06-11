@@ -1,6 +1,7 @@
 import 'package:children_stories/app/theme/app_colors.dart';
 import 'package:children_stories/app/theme/app_text_styles.dart';
 import 'package:children_stories/core/constants/app_icons.dart';
+import 'package:children_stories/l10n/app_localizations.dart';
 import 'package:children_stories/viewmodels/auth_viewmodel.dart';
 import 'package:children_stories/viewmodels/onboarding_viewmodel.dart';
 import 'package:flutter/material.dart';
@@ -48,6 +49,45 @@ const List<AgeRange> ageRanges = [
   ),
 ];
 
+String _getAgeTitle(int age, AppLocalizations l10n) {
+  switch (age) {
+    case 3:
+      return l10n.onboarding_age_title_3;
+    case 7:
+      return l10n.onboarding_age_title_7;
+    case 11:
+      return l10n.onboarding_age_title_11;
+    default:
+      return '';
+  }
+}
+
+String _getAgeSubtitle(int age, AppLocalizations l10n) {
+  switch (age) {
+    case 3:
+      return l10n.onboarding_age_subtitle_3;
+    case 7:
+      return l10n.onboarding_age_subtitle_7;
+    case 11:
+      return l10n.onboarding_age_subtitle_11;
+    default:
+      return '';
+  }
+}
+
+String _getAgeStories(int age, AppLocalizations l10n) {
+  switch (age) {
+    case 3:
+      return l10n.onboarding_age_stories_3;
+    case 7:
+      return l10n.onboarding_age_stories_7;
+    case 11:
+      return l10n.onboarding_age_stories_11;
+    default:
+      return '';
+  }
+}
+
 class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});
 
@@ -90,7 +130,7 @@ class __OnboardingScreenContentState extends State<_OnboardingScreenContent> {
               child: PageView(
                 controller: _pageController,
                 physics: const NeverScrollableScrollPhysics(),
-                children: [_buildAgeStep(vm), _buildGenderStep(vm, context)],
+                children: [_buildAgeStep(vm, context), _buildGenderStep(vm, context)],
               ),
             ),
             _buildBottomBar(vm, authVM, context),
@@ -100,7 +140,8 @@ class __OnboardingScreenContentState extends State<_OnboardingScreenContent> {
     );
   }
 
-  Widget _buildAgeStep(OnboardingViewModel vm) {
+  Widget _buildAgeStep(OnboardingViewModel vm, BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     return Center(
       child: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -122,7 +163,7 @@ class __OnboardingScreenContentState extends State<_OnboardingScreenContent> {
             ),
             const SizedBox(height: 20),
             Text(
-              'How old is the reader?',
+              localizations.onboarding_age_question,
               style: AppTextStyles.displayMedium.copyWith(
                 fontWeight: FontWeight.w800,
               ),
@@ -130,7 +171,7 @@ class __OnboardingScreenContentState extends State<_OnboardingScreenContent> {
             ),
             const SizedBox(height: 8),
             Text(
-              'We personalize the reading levels, vocabulary, and stories based on age.',
+              localizations.onboarding_age_description,
               style: AppTextStyles.bodyMedium,
               textAlign: TextAlign.center,
             ),
@@ -141,9 +182,9 @@ class __OnboardingScreenContentState extends State<_OnboardingScreenContent> {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 16),
                   child: _buildSelectionCard(
-                    title: range.label,
-                    subtitle: range.subtitle,
-                    badgeText: range.storyCount,
+                    title: _getAgeTitle(range.representativeAge, localizations),
+                    subtitle: _getAgeSubtitle(range.representativeAge, localizations),
+                    badgeText: _getAgeStories(range.representativeAge, localizations),
                     leading: SvgPicture.asset(
                       range.iconPath,
                       width: 24,
@@ -162,6 +203,7 @@ class __OnboardingScreenContentState extends State<_OnboardingScreenContent> {
   }
 
   Widget _buildGenderStep(OnboardingViewModel vm, BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     final isGirlSelected = vm.selectedGender == 'girl';
     final isBoySelected = vm.selectedGender == 'boy';
     final isNoneSelected =
@@ -181,7 +223,7 @@ class __OnboardingScreenContentState extends State<_OnboardingScreenContent> {
             ),
             const SizedBox(height: 20),
             Text(
-              'Tell us about them',
+              localizations.onboarding_gender_question,
               style: AppTextStyles.displayMedium.copyWith(
                 fontWeight: FontWeight.w800,
               ),
@@ -189,14 +231,14 @@ class __OnboardingScreenContentState extends State<_OnboardingScreenContent> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Help us tailor recommended stories for your child.',
+              localizations.onboarding_gender_description,
               style: AppTextStyles.bodyMedium,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 32),
             _buildSelectionCard(
-              title: 'Girl',
-              subtitle: 'Recommended stories for girls',
+              title: localizations.gender_girl,
+              subtitle: localizations.gender_girl_subtitle,
               leading: Icon(
                 AppIcons.genderFemale,
                 size: 24,
@@ -209,8 +251,8 @@ class __OnboardingScreenContentState extends State<_OnboardingScreenContent> {
             ),
             const SizedBox(height: 16),
             _buildSelectionCard(
-              title: 'Boy',
-              subtitle: 'Recommended stories for boys',
+              title: localizations.gender_boy,
+              subtitle: localizations.gender_boy_subtitle,
               leading: Icon(
                 AppIcons.genderMale,
                 size: 24,
@@ -223,8 +265,8 @@ class __OnboardingScreenContentState extends State<_OnboardingScreenContent> {
             ),
             const SizedBox(height: 16),
             _buildSelectionCard(
-              title: "I don't want to specify",
-              subtitle: 'Show stories for everyone',
+              title: localizations.gender_unspecified,
+              subtitle: localizations.gender_unspecified_subtitle,
               leading: Icon(
                 AppIcons.genderNeuter,
                 size: 24,
@@ -239,7 +281,7 @@ class __OnboardingScreenContentState extends State<_OnboardingScreenContent> {
             TextButton.icon(
               icon: Icon(AppIcons.info, size: 20, color: AppColors.primary),
               label: Text(
-                'Why do we ask for this information?',
+                localizations.onboarding_why_we_ask_button,
                 style: AppTextStyles.titleMedium.copyWith(
                   color: AppColors.primary,
                   fontWeight: FontWeight.w700,
@@ -380,6 +422,7 @@ class __OnboardingScreenContentState extends State<_OnboardingScreenContent> {
   }
 
   void _showWhyWeAskDialog(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -398,7 +441,7 @@ class __OnboardingScreenContentState extends State<_OnboardingScreenContent> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Why We Ask',
+                localizations.onboarding_why_we_ask_title,
                 style: AppTextStyles.displayMedium.copyWith(
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
@@ -406,7 +449,7 @@ class __OnboardingScreenContentState extends State<_OnboardingScreenContent> {
               ),
               const SizedBox(height: 16),
               Text(
-                'Every child is unique! By knowing their age and preferences, we can recommend stories that match their vocabulary level, interests, and developmental stage. Your data is kept private and used only to personalize their in-app experience.',
+                localizations.onboarding_why_we_ask_content,
                 style: AppTextStyles.bodyMedium.copyWith(
                   height: 1.6,
                   color: AppColors.textSecondary,
@@ -422,7 +465,7 @@ class __OnboardingScreenContentState extends State<_OnboardingScreenContent> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                 ),
-                child: Text('Got It!', style: AppTextStyles.buttonLarge),
+                child: Text(localizations.onboarding_got_it, style: AppTextStyles.buttonLarge),
               ),
               const SizedBox(height: 8),
             ],
@@ -437,6 +480,7 @@ class __OnboardingScreenContentState extends State<_OnboardingScreenContent> {
     AuthViewModel authVM,
     BuildContext context,
   ) {
+    final localizations = AppLocalizations.of(context)!;
     final isAgeStep = vm.currentStep == 0;
     final isNextDisabled = isAgeStep && vm.selectedAge == null;
 
@@ -455,7 +499,7 @@ class __OnboardingScreenContentState extends State<_OnboardingScreenContent> {
                 color: AppColors.textSecondary,
               ),
               label: Text(
-                'Back',
+                localizations.onboarding_back,
                 style: AppTextStyles.titleLarge.copyWith(
                   color: AppColors.textSecondary,
                   fontWeight: FontWeight.w700,
@@ -512,7 +556,7 @@ class __OnboardingScreenContentState extends State<_OnboardingScreenContent> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        isAgeStep ? 'Continue' : 'Complete',
+                        isAgeStep ? localizations.onboarding_continue : localizations.onboarding_complete,
                         style: AppTextStyles.buttonLarge,
                       ),
                       const SizedBox(width: 8),

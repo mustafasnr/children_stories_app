@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:children_stories/app/theme/app_text_styles.dart';
+import 'package:children_stories/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -61,27 +62,28 @@ class _AnonUpgradeCardState extends State<AnonUpgradeCard> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
+    final localizations = AppLocalizations.of(context)!;
+
     final slides = [
-      const _CarouselSlideData(
+      _CarouselSlideData(
         emoji: '📚',
-        title: 'Create Your Library',
-        description:
-            'Save your favorite stories and access them anytime, anywhere.',
+        title: localizations.settings_anon_upgrade_title_library,
+        description: localizations.settings_anon_upgrade_desc_library,
       ),
-      const _CarouselSlideData(
+      _CarouselSlideData(
         emoji: '🎧',
-        title: 'Audio Narrations',
-        description: 'Listen to high-quality voiceovers and narrations.',
+        title: localizations.settings_anon_upgrade_title_audio,
+        description: localizations.settings_anon_upgrade_desc_audio,
       ),
-      const _CarouselSlideData(
+      _CarouselSlideData(
         emoji: '✨',
-        title: 'Sync Across Devices',
-        description: 'Never lose your reading progress or saved stats.',
+        title: localizations.settings_anon_upgrade_title_sync,
+        description: localizations.settings_anon_upgrade_desc_sync,
       ),
     ];
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
@@ -94,7 +96,7 @@ class _AnonUpgradeCardState extends State<AnonUpgradeCard> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SizedBox(
-            height: 220,
+            height: 190,
             child: PageView.builder(
               controller: _pageController,
               onPageChanged: (page) {
@@ -177,9 +179,9 @@ class _AnonUpgradeCardState extends State<AnonUpgradeCard> {
               ),
               elevation: 0,
             ),
-            child: const Text(
-              'Sign In / Register',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+            child: Text(
+              localizations.settings_anon_upgrade_button,
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
             ),
           ),
         ],

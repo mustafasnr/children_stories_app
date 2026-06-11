@@ -1,7 +1,8 @@
 import 'package:children_stories/app/theme/app_colors.dart';
 import 'package:children_stories/app/theme/app_text_styles.dart';
 import 'package:children_stories/core/constants/app_icons.dart';
-import 'package:children_stories/viewmodels/theme_viewmodel.dart';
+import 'package:children_stories/l10n/app_localizations.dart';
+import 'package:children_stories/viewmodels/settings_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -10,11 +11,12 @@ class TextSizeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final themeVM = context.watch<ThemeViewModel>();
-    final step = themeVM.storyTextSizeStep;
+    final settingsVM = context.watch<SettingsViewModel>();
+    final localizations = AppLocalizations.of(context)!;
+    final step = settingsVM.storyTextSizeStep;
     final sizeLabel = step <= 3.0
-        ? 'Small'
-        : (step <= 7.0 ? 'Medium' : 'Large');
+        ? localizations.settings_text_size_small
+        : (step <= 7.0 ? localizations.settings_text_size_medium : localizations.settings_text_size_large);
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -49,7 +51,7 @@ class TextSizeCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    'Text Size',
+                    localizations.settings_text_size,
                     style: AppTextStyles.titleMedium.copyWith(
                       color: AppColors.textPrimary,
                       fontWeight: FontWeight.w700,
@@ -63,7 +65,7 @@ class TextSizeCard extends StatelessWidget {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: themeVM.isDarkMode
+                  color: settingsVM.isDarkMode
                       ? AppColors.primary
                       : AppColors.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
@@ -71,7 +73,7 @@ class TextSizeCard extends StatelessWidget {
                 child: Text(
                   sizeLabel,
                   style: AppTextStyles.labelSmall.copyWith(
-                    color: themeVM.isDarkMode
+                    color: settingsVM.isDarkMode
                         ? Colors.white
                         : AppColors.primary,
                     fontWeight: FontWeight.bold,
@@ -82,8 +84,9 @@ class TextSizeCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Center(
-            child: FractionallySizedBox(
-              widthFactor: 0.75,
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 480),
+              padding: const EdgeInsets.symmetric(horizontal: 4),
               child: Row(
                 children: [
                   Container(
@@ -103,7 +106,7 @@ class TextSizeCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: SliderTheme(
                       data: SliderTheme.of(context).copyWith(
@@ -116,12 +119,12 @@ class TextSizeCard extends StatelessWidget {
                         max: 10.0,
                         divisions: 9,
                         onChanged: (val) {
-                          themeVM.setStoryTextSizeStep(val);
+                          settingsVM.setStoryTextSizeStep(val);
                         },
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
                   Container(
                     width: 36,
                     height: 36,
@@ -156,9 +159,9 @@ class TextSizeCard extends StatelessWidget {
             ),
             child: Center(
               child: Text(
-                '"Once upon a time, in a magical forest..."',
+                localizations.settings_text_size_preview,
                 style: AppTextStyles.readerText.copyWith(
-                  fontSize: themeVM.storyTextSize,
+                  fontSize: settingsVM.storyTextSize,
                   color: AppColors.textSecondary,
                   height: 1.4,
                 ),

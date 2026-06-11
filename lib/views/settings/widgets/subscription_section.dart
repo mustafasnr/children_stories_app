@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:children_stories/app/theme/app_colors.dart';
 import 'package:children_stories/app/theme/app_text_styles.dart';
 import 'package:children_stories/core/services/toast_service.dart';
+import 'package:children_stories/l10n/app_localizations.dart';
 import 'package:children_stories/viewmodels/auth_viewmodel.dart';
 import 'package:children_stories/viewmodels/subscription_viewmodel.dart';
 import 'package:children_stories/views/settings/widgets/premium_card.dart';
@@ -25,6 +26,8 @@ class SubscriptionSection extends StatelessWidget {
     final subVM = context.watch<SubscriptionViewModel>();
     final isAnonymous = authVM.isAnonymous;
     final isPremium = subVM.isPremium;
+
+    final localizations = AppLocalizations.of(context)!;
 
     if (!isPremium) {
       return const PremiumCard();
@@ -63,7 +66,7 @@ class SubscriptionSection extends StatelessWidget {
             ),
           ),
           title: Text(
-            'Manage Subscription',
+            localizations.settings_manage_subscription,
             style: AppTextStyles.titleMedium.copyWith(
               color: AppColors.textPrimary,
               fontWeight: FontWeight.w700,
@@ -71,7 +74,7 @@ class SubscriptionSection extends StatelessWidget {
           ),
           subtitle: subVM.expiresAt != null
               ? Text(
-                  'Expires: ${_formatExpiryDate(subVM.expiresAt!)}',
+                  localizations.settings_subscription_expires(_formatExpiryDate(subVM.expiresAt!)),
                   style: AppTextStyles.bodySmall.copyWith(
                     color: AppColors.textSecondary,
                   ),
@@ -85,7 +88,7 @@ class SubscriptionSection extends StatelessWidget {
           onTap: () {
             if (isAnonymous) {
               ToastService.showInfo(
-                'Please sign in to access subscriptions. Tap to sign in.',
+                localizations.settings_subscription_signin_warning,
                 onTap: () {
                   context.push('/login?upgrade=true');
                 },

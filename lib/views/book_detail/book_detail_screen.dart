@@ -1,5 +1,7 @@
 import 'package:children_stories/app/theme/app_colors.dart';
+import 'package:children_stories/core/constants/app_icons.dart';
 import 'package:children_stories/app/theme/app_text_styles.dart';
+import 'package:children_stories/l10n/app_localizations.dart';
 import 'package:children_stories/viewmodels/book_detail_viewmodel.dart';
 import 'package:children_stories/viewmodels/home_viewmodel.dart';
 import 'package:children_stories/viewmodels/auth_viewmodel.dart';
@@ -41,6 +43,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final subVM = context.watch<SubscriptionViewModel>();
+    final localizations = AppLocalizations.of(context)!;
     return ChangeNotifierProvider.value(
       value: _vm,
       child: Consumer<BookDetailViewModel>(
@@ -55,13 +58,17 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
               appBar: AppBar(),
               body: Center(
                 child: Text(
-                  vm.error ?? 'Book not found.',
+                  vm.error ?? localizations.book_detail_not_found,
                   style: AppTextStyles.bodyMedium,
                 ),
               ),
             );
           }
           final book = vm.book!;
+
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          final isTurkish =
+              Localizations.localeOf(context).languageCode == 'tr';
 
           return Scaffold(
             body: CustomScrollView(
@@ -104,7 +111,8 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                           onTap: () async {
                             if (authVM.isAnonymous) {
                               ToastService.showInfo(
-                                'Please sign in to bookmark stories. Tap to sign in.',
+                                localizations
+                                    .book_detail_bookmark_signin_warning,
                                 onTap: () {
                                   context.push('/login?upgrade=true');
                                 },
@@ -117,14 +125,16 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                                 if (mounted) {
                                   if (!wasBookmarked) {
                                     ToastService.showSuccess(
-                                      'Added to library! Tap to view.',
+                                      localizations
+                                          .book_detail_added_to_library,
                                       onTap: () {
                                         context.go('/library');
                                       },
                                     );
                                   } else {
                                     ToastService.showInfo(
-                                      'Removed from library',
+                                      localizations
+                                          .book_detail_removed_from_library,
                                     );
                                   }
                                 }
@@ -206,30 +216,35 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                       ),
                     ),
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 20,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // Badges row
-                          Row(
-                            children: [
-                              if (book.isPremium)
-                                _badge(
-                                  '✨ Premium',
-                                  AppColors.premium,
-                                  Icons.star_rounded,
-                                ),
-                              if (book.isPremium && book.isFeatured)
-                                const SizedBox(width: 8),
-                              if (book.isFeatured)
-                                _badge(
-                                  '⭐ Featured',
-                                  AppColors.primary,
-                                  Icons.star_border_rounded,
-                                ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
+                          if (book.isPremium || book.isFeatured) ...[
+                            Row(
+                              children: [
+                                if (book.isPremium)
+                                  _badge(
+                                    localizations.book_detail_badge_premium,
+                                    AppColors.premium,
+                                    AppIcons.premiumBadge,
+                                  ),
+                                if (book.isPremium && book.isFeatured)
+                                  const SizedBox(width: 8),
+                                if (book.isFeatured)
+                                  _badge(
+                                    localizations.book_detail_badge_featured,
+                                    AppColors.primary,
+                                    AppIcons.featuredBadge,
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                          ],
                           Text(
                             book.title,
                             style: AppTextStyles.headlineLarge.copyWith(
@@ -237,55 +252,50 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                               letterSpacing: -0.5,
                             ),
                           ),
-                          const SizedBox(height: 20),
-                          // Stats/Meta row organized into clean cards
-                          Row(
+                          const SizedBox(height: 16),
+                          // Stats/Meta row organized into clean badges
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
                             children: [
-                              Expanded(
-                                child: _buildStatCard(
-                                  'Age',
-                                  book.ageRange,
-                                  Icons.face_rounded,
-                                  AppColors.primary,
-                                ),
+                              _buildStatBadge(
+                                icon: Icons.face_rounded,
+                                value: isTurkish
+                                    ? '${book.ageMin}-${book.ageMax} yaş'
+                                    : '${book.ageMin}-${book.ageMax} yrs',
+                                color: isDark
+                                    ? const Color(0xFFE0D7FF)
+                                    : AppColors.primary,
                               ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: _buildStatCard(
-                                  'Time',
-                                  book.readTime,
-                                  Icons.access_time_rounded,
-                                  AppColors.accent,
-                                ),
+                              _buildStatBadge(
+                                icon: Icons.access_time_rounded,
+                                value: isTurkish
+                                    ? '${book.readTimeMinutes} dk'
+                                    : '${book.readTimeMinutes} min',
+                                color: AppColors.accent,
                               ),
-                              if (book.pageCount > 0) ...[
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: _buildStatCard(
-                                    'Pages',
-                                    '${book.pageCount}',
-                                    Icons.menu_book_rounded,
-                                    Colors.blue,
-                                  ),
+                              if (book.pageCount > 0)
+                                _buildStatBadge(
+                                  icon: Icons.menu_book_rounded,
+                                  value: '${book.pageCount}',
+                                  color: isDark
+                                      ? const Color(0xFFBAE6FD)
+                                      : Colors.blue,
                                 ),
-                              ],
-                              if (vm.hasAudio) ...[
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: _buildStatCard(
-                                    'Audio',
-                                    vm.audio!.formattedDuration,
-                                    Icons.headphones_rounded,
-                                    AppColors.premium,
-                                  ),
+                              if (vm.hasAudio)
+                                _buildStatBadge(
+                                  icon: Icons.headphones_rounded,
+                                  value: vm.audio!.formattedDuration,
+                                  color: isDark
+                                      ? AppColors.premiumLight
+                                      : AppColors.premium,
                                 ),
-                              ],
                             ],
                           ),
                           const SizedBox(height: 28),
                           // About label
                           Text(
-                            'About this Story',
+                            localizations.book_detail_about,
                             style: AppTextStyles.titleMedium.copyWith(
                               fontWeight: FontWeight.bold,
                               color: AppColors.textPrimary,
@@ -300,15 +310,24 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                                 height: 1.5,
                               ),
                             ),
-                          const SizedBox(height: 36),
-                          // Action buttons
-                          _buildActionButtons(context, vm, subVM),
                         ],
                       ),
                     ),
                   ),
                 ),
               ],
+            ),
+            bottomNavigationBar: Container(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 20,
+                  ),
+                  child: _buildActionButtons(context, vm, subVM),
+                ),
+              ),
             ),
           );
         },
@@ -344,55 +363,33 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
     ),
   );
 
-  Widget _buildStatCard(
-    String title,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
+  Widget _buildStatBadge({
+    required IconData icon,
+    required String value,
+    required Color color,
+  }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surface : Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        color: color.withValues(alpha: isDark ? 0.15 : 0.08),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.textHint.withValues(alpha: isDark ? 0.08 : 0.05),
-          width: 1.5,
+          color: color.withValues(alpha: isDark ? 0.3 : 0.15),
+          width: 1,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
-      child: Column(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.08),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, size: 18, color: color),
-          ),
-          const SizedBox(height: 8),
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 6),
           Text(
             value,
-            style: AppTextStyles.labelMedium.copyWith(
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            title,
             style: TextStyle(
-              fontSize: 10,
-              color: AppColors.textHint,
-              fontWeight: FontWeight.w500,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: color,
             ),
           ),
         ],
@@ -406,6 +403,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
     SubscriptionViewModel subVM,
   ) {
     final book = vm.book!;
+    final localizations = AppLocalizations.of(context)!;
     final isPremiumLocked = book.isPremium && !subVM.isPremium;
 
     if (isPremiumLocked) {
@@ -413,7 +411,9 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
         onTap: () {
           final authVM = context.read<AuthViewModel>();
           if (authVM.isAnonymous) {
-            ToastService.showInfo('Please sign in first to access Premium content');
+            ToastService.showInfo(
+              localizations.book_detail_premium_signin_warning,
+            );
             context.push('/login?upgrade=true');
           } else {
             AdaptyService.showPaywall(context);
@@ -437,14 +437,10 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
-                  Icons.lock_rounded,
-                  color: Colors.white,
-                  size: 20,
-                ),
+                const Icon(Icons.lock_rounded, color: Colors.white, size: 20),
                 const SizedBox(width: 10),
                 Text(
-                  'Unlock to Read Book',
+                  localizations.book_detail_unlock_button,
                   style: AppTextStyles.buttonLarge.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -485,7 +481,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
               ),
               const SizedBox(width: 10),
               Text(
-                'Read Now',
+                localizations.book_detail_read_button,
                 style: AppTextStyles.buttonLarge.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,

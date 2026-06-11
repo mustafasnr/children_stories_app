@@ -2,14 +2,38 @@ import 'package:children_stories/app/theme/app_colors.dart';
 import 'package:children_stories/app/theme/app_text_styles.dart';
 import 'package:children_stories/core/services/adapty_service.dart';
 import 'package:children_stories/core/services/toast_service.dart';
+import 'package:children_stories/l10n/app_localizations.dart';
 import 'package:children_stories/viewmodels/auth_viewmodel.dart';
 import 'package:children_stories/viewmodels/subscription_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-class PremiumCard extends StatelessWidget {
+class PremiumCard extends StatefulWidget {
   const PremiumCard({super.key});
+
+  @override
+  State<PremiumCard> createState() => _PremiumCardState();
+}
+
+class _PremiumCardState extends State<PremiumCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,6 +43,8 @@ class PremiumCard extends StatelessWidget {
 
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+
+    final localizations = AppLocalizations.of(context)!;
 
     return Container(
       decoration: BoxDecoration(
@@ -95,7 +121,9 @@ class PremiumCard extends StatelessWidget {
           title: Row(
             children: [
               Text(
-                isPremium ? 'Premium Active' : 'Free Plan',
+                isPremium
+                    ? localizations.settings_premium_active
+                    : localizations.settings_free_plan,
                 style: AppTextStyles.titleMedium.copyWith(
                   color: isPremium ? Colors.white : colorScheme.onSurface,
                   fontWeight: FontWeight.w800,
@@ -126,8 +154,8 @@ class PremiumCard extends StatelessWidget {
           ),
           subtitle: Text(
             isPremium
-                ? 'All stories & audio unlocked'
-                : 'Upgrade to unlock everything',
+                ? localizations.settings_premium_active_desc
+                : localizations.settings_free_plan_desc,
             style: AppTextStyles.bodySmall.copyWith(
               color: isPremium
                   ? Colors.white.withValues(alpha: 0.85)
@@ -140,52 +168,65 @@ class PremiumCard extends StatelessWidget {
                   color: Colors.white,
                   size: 24,
                 )
-              : Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        colorScheme.primary,
-                        colorScheme.primary.withValues(alpha: 0.7),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: colorScheme.primary.withValues(alpha: 0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
+              : AnimatedBuilder(
+                  animation: _controller,
+                  builder: (context, child) {
+                    return CustomPaint(
+                      foregroundPainter: GlowBorderPainter(
+                        animationValue: _controller.value,
+                        color: Colors.white,
+                        borderRadius: 12,
                       ),
-                    ],
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () {
-                        if (isAnonymous) {
-                          ToastService.showInfo(
-                            'Please sign in first to purchase Premium! Tap to sign in.',
-                            onTap: () {
-                              context.push('/login?upgrade=true');
-                            },
-                          );
-                        } else {
-                          AdaptyService.showPaywall(context);
-                        }
-                      },
+                      child: child,
+                    );
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          colorScheme.primary,
+                          colorScheme.primary.withValues(alpha: 0.7),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
                       borderRadius: BorderRadius.circular(12),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
+                      boxShadow: [
+                        BoxShadow(
+                          color: colorScheme.primary.withValues(alpha: 0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
                         ),
-                        child: Text(
-                          'Upgrade',
-                          style: AppTextStyles.buttonLarge.copyWith(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
+                      ],
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          if (isAnonymous) {
+                            ToastService.showInfo(
+                              localizations.settings_premium_signin_warning,
+                              onTap: () {
+                                context.push('/login?upgrade=true');
+                              },
+                            );
+                          } else {
+                            AdaptyService.showPaywall(context);
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          child: Text(
+                            localizations.settings_upgrade_button,
+                            style: AppTextStyles.buttonLarge.copyWith(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
@@ -197,7 +238,7 @@ class PremiumCard extends StatelessWidget {
               : () {
                   if (isAnonymous) {
                     ToastService.showInfo(
-                      'Please sign in first to purchase Premium! Tap to sign in.',
+                      localizations.settings_premium_signin_warning,
                       onTap: () {
                         context.push('/login?upgrade=true');
                       },
@@ -209,5 +250,84 @@ class PremiumCard extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class GlowBorderPainter extends CustomPainter {
+  final double animationValue;
+  final Color color;
+  final double borderRadius;
+
+  GlowBorderPainter({
+    required this.animationValue,
+    required this.color,
+    required this.borderRadius,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = Path()
+      ..addRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(0, 0, size.width, size.height),
+          Radius.circular(borderRadius),
+        ),
+      );
+
+    final metrics = path.computeMetrics().toList();
+    if (metrics.isEmpty) return;
+
+    final metric = metrics.first;
+    final totalLength = metric.length;
+
+    // Glowing segment is 22% of total perimeter
+    final segmentLength = totalLength * 0.22;
+    final start = (animationValue * totalLength) % totalLength;
+    final end = start + segmentLength;
+
+    Path extractPath;
+    if (end <= totalLength) {
+      extractPath = metric.extractPath(start, end);
+    } else {
+      extractPath = metric.extractPath(start, totalLength);
+      extractPath.addPath(
+        metric.extractPath(0.0, end % totalLength),
+        Offset.zero,
+      );
+    }
+
+    // Layer 1: Outer glow (very soft and wide)
+    final outerGlowPaint = Paint()
+      ..color = color.withValues(alpha: 0.18)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 7.0
+      ..strokeCap = StrokeCap.round
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.0);
+    canvas.drawPath(extractPath, outerGlowPaint);
+
+    // Layer 2: Inner glow (brighter, slightly less blurred)
+    final innerGlowPaint = Paint()
+      ..color = color.withValues(alpha: 0.45)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4.0
+      ..strokeCap = StrokeCap.round
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.8);
+    canvas.drawPath(extractPath, innerGlowPaint);
+
+    // Layer 3: Soft highlight core (anchors the light source, blurred slightly to stay soft)
+    final corePaint = Paint()
+      ..color = color.withValues(alpha: 0.75)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.8
+      ..strokeCap = StrokeCap.round
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 0.4);
+    canvas.drawPath(extractPath, corePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant GlowBorderPainter oldDelegate) {
+    return oldDelegate.animationValue != animationValue ||
+        oldDelegate.color != color ||
+        oldDelegate.borderRadius != borderRadius;
   }
 }

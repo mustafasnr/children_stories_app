@@ -1,18 +1,22 @@
-import 'package:flutter/material.dart';
+import 'dart:ui' as ui;
 import 'package:children_stories/app/theme/app_colors.dart';
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class ThemeViewModel extends ChangeNotifier {
+class SettingsViewModel extends ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.light;
   bool _storySoundsEnabled = true;
   double _storyTextSizeStep = 5.0;
+  String _appLanguageCode = 'en';
 
   ThemeMode get themeMode => _themeMode;
   bool get storySoundsEnabled => _storySoundsEnabled;
   double get storyTextSizeStep => _storyTextSizeStep;
   double get storyTextSize => 10.0 + _storyTextSizeStep * 2.0;
+  String get appLanguageCode => _appLanguageCode;
+  Locale get locale => Locale(_appLanguageCode);
 
-  ThemeViewModel() {
+  SettingsViewModel() {
     _loadSettings();
   }
 
@@ -23,10 +27,18 @@ class ThemeViewModel extends ChangeNotifier {
       _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
       _storySoundsEnabled = prefs.getBool('story_sounds') ?? true;
       _storyTextSizeStep = prefs.getDouble('story_text_size_step') ?? 5.0;
+      final savedLang = prefs.getString('app_language_code');
+      if (savedLang != null) {
+        _appLanguageCode = savedLang;
+      } else {
+        final sysLang = ui.PlatformDispatcher.instance.locale.languageCode.toLowerCase();
+        _appLanguageCode = (sysLang == 'tr') ? 'tr' : 'en';
+        await prefs.setString('app_language_code', _appLanguageCode);
+      }
       _updateAppColors();
       notifyListeners();
     } catch (e) {
-      debugPrint('[ThemeVM] error loading settings: $e');
+      debugPrint('[SettingsVM] error loading settings: $e');
     }
   }
 
@@ -56,7 +68,7 @@ class ThemeViewModel extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('is_dark', mode == ThemeMode.dark);
     } catch (e) {
-      debugPrint('[ThemeVM] error saving theme: $e');
+      debugPrint('[SettingsVM] error saving theme: $e');
     }
   }
 
@@ -69,7 +81,7 @@ class ThemeViewModel extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('story_sounds', enabled);
     } catch (e) {
-      debugPrint('[ThemeVM] error saving sounds setting: $e');
+      debugPrint('[SettingsVM] error saving sounds setting: $e');
     }
   }
 
@@ -95,7 +107,20 @@ class ThemeViewModel extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setDouble('story_text_size_step', step);
     } catch (e) {
-      debugPrint('[ThemeVM] error saving text size setting: $e');
+      debugPrint('[SettingsVM] error saving text size setting: $e');
+    }
+  }
+
+  Future<void> setAppLanguage(String code) async {
+    if (_appLanguageCode == code) return;
+    _appLanguageCode = code;
+    notifyListeners();
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('app_language_code', code);
+    } catch (e) {
+      debugPrint('[SettingsVM] error saving app language setting: $e');
     }
   }
 }

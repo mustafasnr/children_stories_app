@@ -1,6 +1,7 @@
 import 'package:children_stories/app/theme/app_colors.dart';
 import 'package:children_stories/app/theme/app_text_styles.dart';
 import 'package:children_stories/data/models/book_model.dart';
+import 'package:children_stories/l10n/app_localizations.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -79,7 +80,7 @@ class FeaturedBookCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      'Featured',
+                      AppLocalizations.of(context)!.badge_featured,
                       style: AppTextStyles.labelSmall.copyWith(
                         color: const Color(0xFF065F46),
                         fontWeight: FontWeight.w800,
@@ -91,11 +92,11 @@ class FeaturedBookCard extends StatelessWidget {
                   Row(
                     children: [
                       if (book.isPremium) ...[
-                        _premiumBadge(),
+                        _premiumBadge(context),
                         const SizedBox(width: 8),
                       ],
                       Text(
-                        book.ageRange,
+                        AppLocalizations.of(context)!.explore_book_age_range(book.ageMin, book.ageMax),
                         style: AppTextStyles.labelSmall.copyWith(
                           color: Colors.white.withValues(alpha: 0.85),
                         ),
@@ -114,7 +115,7 @@ class FeaturedBookCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    book.readTime,
+                    AppLocalizations.of(context)!.explore_book_read_time(book.readTimeMinutes),
                     style: AppTextStyles.labelSmall.copyWith(
                       color: Colors.white.withValues(alpha: 0.7),
                     ),
@@ -128,15 +129,15 @@ class FeaturedBookCard extends StatelessWidget {
     );
   }
 
-  Widget _premiumBadge() => Container(
+  Widget _premiumBadge(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
     decoration: BoxDecoration(
       color: const Color(0xFFFBBF24), // Yellowish/Amber
       borderRadius: BorderRadius.circular(10),
     ),
-    child: const Text(
-      'Premium',
-      style: TextStyle(
+    child: Text(
+      AppLocalizations.of(context)!.badge_premium,
+      style: const TextStyle(
         fontSize: 10,
         fontWeight: FontWeight.w800,
         color: Color(0xFF1E1B4B),

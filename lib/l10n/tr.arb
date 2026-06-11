@@ -1,0 +1,186 @@
+{
+  "@@locale": "tr",
+  "language_name": "Türkçe",
+  "app_language": "Uygulama Dili",
+  "select_language": "Dil Seçin",
+  "all_stories": "Tüm Hikayeler",
+  "featured": "Öne Çıkanlar",
+  "coming_soon": "Yakında",
+  "no_stories_yet": "Henüz hikaye yok",
+  "stories_coming_soon": "Bu dil için hikayeler yakında gelecek!",
+  
+  "category_1": "Tüm Hikayeler",
+  "category_2": "Masallar",
+  "category_3": "Macera",
+  "category_4": "Hayvanlar",
+  "category_5": "Fantastik",
+
+  "login_title": "Çocuk Hikayeleri",
+  "login_subtitle": "Meraklı zihinler için büyülü hikayeler",
+  "login_by_continuing": "Devam ederek ",
+  "login_terms_of_service": "Kullanım Koşullarını",
+  "login_and": "\nve ",
+  "login_privacy_policy": "Gizlilik Politikasını",
+  "login_agree_suffix": " kabul etmiş olursunuz.",
+  "login_get_started": "Başlayın",
+  "login_card_subtitle": "Okuma maceranıza başlamak için giriş yapın",
+  "login_connect_google": "Bağlan",
+  "login_continue_google": "Devam Et",
+  "login_connect_apple": "Bağlan",
+  "login_continue_apple": "Devam Et",
+  "login_not_now": "Şimdi Değil",
+  "login_continue_without_sign_in": "Giriş yapmadan devam et",
+  "login_google_key_mismatch_warning": "Geliştirme ve yayınlama anahtaları aynı olmadığı için Google ile giriş şimdilik çalışmamaktadır.",
+  "onboarding_age_title_3": "2 - 5 Yaş",
+  "onboarding_age_subtitle_3": "Resimli kitaplar, ninniler ve basit masallar",
+  "onboarding_age_stories_3": "150+ Hikaye",
+  "onboarding_age_title_7": "6 - 9 Yaş",
+  "onboarding_age_subtitle_7": "Maceralar, ilk okuma kitapları ve masallar",
+  "onboarding_age_stories_7": "350+ Hikaye",
+  "onboarding_age_title_11": "10 - 12 Yaş",
+  "onboarding_age_subtitle_11": "Bölümlü kitaplar, fantastik ve gizemler",
+  "onboarding_age_stories_11": "200+ Hikaye",
+  "onboarding_age_question": "Okuyucu kaç yaşında?",
+  "onboarding_age_description": "Okuma seviyelerini, kelime dağarcığını ve hikayeleri yaşa göre kişiselleştiriyoruz.",
+  "onboarding_gender_question": "Bize onlardan bahsedin",
+  "onboarding_gender_description": "Çocuğunuz için önerilen hikayeleri özelleştirmemize yardımcı olun.",
+  "gender_girl": "Kız",
+  "gender_girl_subtitle": "Kızlar için önerilen hikayeler",
+  "gender_boy": "Erkek",
+  "gender_boy_subtitle": "Erkekler için önerilen hikayeler",
+  "gender_unspecified": "Belirtmek istemiyorum",
+  "gender_unspecified_subtitle": "Herkes için hikayeleri göster",
+  "onboarding_why_we_ask_button": "Bu bilgiyi neden istiyoruz?",
+  "onboarding_why_we_ask_title": "Neden İstiyoruz",
+  "onboarding_why_we_ask_content": "Her çocuk benzersizdir! Yaşlarını ve tercihlerini bilerek, kelime seviyelerine, ilgi alanlarına ve gelişim aşamalarına uygun hikayeler önerebiliriz. Verileriniz gizli tutulur ve yalnızca uygulama içi deneyimlerini kişiselleştirmek için kullanılır.",
+  "onboarding_back": "Geri",
+  "onboarding_continue": "Devam Et",
+  "onboarding_complete": "Tamamla",
+  "onboarding_got_it": "Anladım!",
+  "preferences_title": "Tercihler",
+  "preferences_subtitle": "Seviyeyi ve önerilen hikayeleri özelleştirin",
+  "preferences_readers_age": "Okuyucu Yaşı",
+  "preferences_readers_gender": "Okuyucu Cinsiyeti",
+  "preferences_save_changes": "Değişiklikleri Kaydet",
+  "preferences_update_success": "Tercihler başarıyla güncellendi",
+  "preferences_update_failed": "Tercihler güncellenemedi: {error}",
+  "preferences_not_set": "Ayarlanmadı",
+  "preferences_all": "Hepsi",
+  "preferences_age_format": "{age} Yaş",
+  "@preferences_age_format": {
+    "placeholders": {
+      "age": {
+        "type": "String"
+      }
+    }
+  },
+  "@preferences_update_failed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "settings_title": "Ayarlar",
+  "settings_default_reader_name": "Okur",
+  "settings_dark_mode": "Karanlık Tema",
+  "settings_story_sounds": "Hikaye Sesleri",
+  "settings_sign_out": "Çıkış Yap",
+  "settings_text_size": "Metin Boyutu",
+  "settings_text_size_small": "Küçük",
+  "settings_text_size_medium": "Orta",
+  "settings_text_size_large": "Büyük",
+  "settings_text_size_preview": "\"Bir varmış, bir yokmuş, büyülü bir ormanda...\"",
+  "settings_anon_upgrade_title_library": "Kütüphaneni Oluştur",
+  "settings_anon_upgrade_desc_library": "En sevdiğin hikayeleri kaydet ve onlara her zaman, her yerden eriş.",
+  "settings_anon_upgrade_title_audio": "Sesli Anlatımlar",
+  "settings_anon_upgrade_desc_audio": "Yüksek kaliteli seslendirmeleri ve anlatımları dinle.",
+  "settings_anon_upgrade_title_sync": "Cihazlar Arası Eşitleme",
+  "settings_anon_upgrade_desc_sync": "Okuma ilerlemeni veya kaydedilen istatistiklerini asla kaybetme.",
+  "settings_anon_upgrade_button": "Giriş Yap / Kaydol",
+  "settings_manage_subscription": "Aboneliği Yönet",
+  "settings_subscription_expires": "Bitiş Tarihi: {date}",
+  "@settings_subscription_expires": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "settings_subscription_signin_warning": "Aboneliklere erişmek için lütfen giriş yapın. Giriş yapmak için dokunun.",
+  "settings_premium_active": "Premium Aktif",
+  "settings_free_plan": "Ücretsiz Plan",
+  "settings_premium_active_desc": "Tüm hikayelerin ve seslerin kilidi açıldı",
+  "settings_free_plan_desc": "Her şeyin kilidini açmak için yükseltin",
+  "settings_premium_signin_warning": "Premium satın almak için lütfen önce giriş yapın! Giriş yapmak için dokunun.",
+  "settings_upgrade_button": "Yükselt",
+  "explore_error_title": "Bir şeyler yanlış gitti",
+  "explore_error_description": "Hikayeler yüklenemedi. Lütfen internet bağlantınızı kontrol edip tekrar deneyin.",
+  "explore_error_retry": "Tekrar Dene",
+  "library_title": "Kütüphane",
+  "library_guest_title": "Hikayeleri kaydetmek için giriş yapın",
+  "library_guest_description": "Bir hesap oluşturarak en sevdiğiniz hikayeleri ve okuma ilerlemenizi takip edin.",
+  "library_guest_button": "Giriş Yap / Kaydol",
+  "library_empty_title": "Kütüphaneniz boş",
+  "library_empty_description": "Hızlı erişim için herhangi bir hikayedeki yer işareti simgesine dokunarak buraya kaydedin.",
+  "library_error_description": "Kütüphaneniz yüklenemedi. Lütfen tekrar deneyin.",
+  "book_detail_not_found": "Hikaye bulunamadı.",
+  "book_detail_bookmark_signin_warning": "Hikayeleri kütüphanenize kaydetmek için lütfen giriş yapın. Giriş yapmak için dokunun.",
+  "book_detail_added_to_library": "Kütüphaneye eklendi! Görüntülemek için dokunun.",
+  "book_detail_removed_from_library": "Kütüphaneden kaldırıldı",
+  "book_detail_badge_premium": "Premium",
+  "book_detail_badge_featured": "Öne Çıkan",
+  "book_detail_stat_age": "Yaş",
+  "book_detail_stat_time": "Süre",
+  "book_detail_stat_pages": "Sayfa",
+  "book_detail_stat_audio": "Ses",
+  "book_detail_about": "Hikaye Hakkında",
+  "book_detail_premium_signin_warning": "Premium içeriğe erişmek için lütfen önce giriş yapın",
+  "book_detail_unlock_button": "Okumak İçin Kilidi Aç",
+  "book_detail_read_button": "Şimdi Oku",
+  "reader_font_size_title": "Hikaye Yazı Boyutu",
+  "reader_font_size_preview": "Önizleme Boyutu: {size} px",
+  "@reader_font_size_preview": {
+    "placeholders": {
+      "size": {
+        "type": "int"
+      }
+    }
+  },
+  "reader_no_pages_title": "Sayfa bulunamadı",
+  "reader_no_pages_description": "Bu hikaye için henüz sayfa yüklenmemiş. Lütfen daha sonra tekrar kontrol edin veya başka bir hikaye okumayı deneyin.",
+  "reader_go_back": "Geri Dön",
+  "badge_premium": "Premium",
+  "badge_featured": "Öne Çıkan",
+  "explore_select_language_voice": "Hikaye Dili ve Sesi Seçin",
+  "explore_story_count": "{count} Hikaye",
+  "@explore_story_count": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "explore_book_age_range": "{ageMin}–{ageMax} yaş",
+  "@explore_book_age_range": {
+    "placeholders": {
+      "ageMin": {
+        "type": "int"
+      },
+      "ageMax": {
+        "type": "int"
+      }
+    }
+  },
+  "explore_book_read_time": "{minutes} dk okuma",
+  "@explore_book_read_time": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "nav_explore": "Keşfet",
+  "nav_library": "Kütüphane",
+  "nav_settings": "Ayarlar"
+}

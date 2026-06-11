@@ -4,6 +4,7 @@ import 'package:children_stories/viewmodels/home_viewmodel.dart';
 import 'package:children_stories/viewmodels/auth_viewmodel.dart';
 import 'package:children_stories/viewmodels/subscription_viewmodel.dart';
 import 'package:children_stories/l10n/app_localizations.dart';
+import 'package:children_stories/core/constants/app_icons.dart';
 import 'package:children_stories/views/explore/widgets/book_card.dart';
 import 'package:children_stories/views/explore/widgets/category_chip_row.dart';
 import 'package:children_stories/views/explore/widgets/featured_book_card.dart';
@@ -11,6 +12,7 @@ import 'package:children_stories/views/explore/widgets/story_language_bottom_she
 import 'package:country_flags/country_flags.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shimmer/shimmer.dart';
 
 class ExploreScreen extends StatefulWidget {
@@ -22,11 +24,13 @@ class ExploreScreen extends StatefulWidget {
 
 class _ExploreScreenState extends State<ExploreScreen> {
   final ScrollController _scrollController = ScrollController();
+  String _selectedVoice = 'Kareem';
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    _loadVoice();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final childAge = context.read<AuthViewModel>().profile?.childAge;
       context.read<HomeViewModel>().initialize(childAge: childAge);
@@ -47,6 +51,18 @@ class _ExploreScreenState extends State<ExploreScreen> {
     }
   }
 
+  Future<void> _loadVoice() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final voice = prefs.getString('selected_voice') ?? 'kareem';
+      if (mounted) {
+        setState(() {
+          _selectedVoice = voice == 'kareem' ? 'Kareem' : 'Emma';
+        });
+      }
+    } catch (_) {}
+  }
+
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context)!;
@@ -58,43 +74,62 @@ class _ExploreScreenState extends State<ExploreScreen> {
             onRefresh: vm.refresh,
             child: CustomScrollView(
               controller: _scrollController,
+              physics: const AlwaysScrollableScrollPhysics(),
               slivers: [
                 SliverAppBar(
                   backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                   floating: true,
                   snap: true,
                   elevation: 0,
-                  toolbarHeight: 70,
+                  toolbarHeight: kToolbarHeight,
+                  titleSpacing: 16,
                   title: Text(
-                    'Children Stories',
+                    localizations.login_title,
                     style: AppTextStyles.displayMedium.copyWith(
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   actions: [
                     if (vm.selectedLanguage != null)
-                      TextButton.icon(
-                        onPressed: () {
-                          StoryLanguageBottomSheet.show(
+                      TextButton(
+                        onPressed: () async {
+                          await StoryLanguageBottomSheet.show(
                             context,
                             languages: vm.languages,
                             selectedIndex: vm.selectedLanguageIndex,
                             onSelected: vm.selectLanguage,
                           );
+                          _loadVoice();
                         },
-                        icon: CountryFlags.flag(
-                          vm.selectedLanguage!.countryCode,
-                          width: 24,
-                          height: 18,
-                          borderRadius: 4,
-                        ),
-                        label: Icon(
-                          Icons.keyboard_arrow_down_rounded,
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
                         style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           visualDensity: VisualDensity.compact,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            CountryFlags.flag(
+                              vm.selectedLanguage!.countryCode,
+                              width: 22,
+                              height: 16,
+                              borderRadius: 3,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              _selectedVoice,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              color: Theme.of(context).colorScheme.onSurface,
+                              size: 18,
+                            ),
+                          ],
                         ),
                       ),
                     const SizedBox(width: 16),
@@ -103,7 +138,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 if (vm.isLoading) ...[
                   SliverToBoxAdapter(child: _buildShimmer(context)),
                 ] else if (vm.error != null) ...[
-                  SliverFillRemaining(child: _buildError(vm)),
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: _buildError(vm),
+                  ),
                 ] else ...[
                   // Featured
                   if (vm.featuredBooks.isNotEmpty)
@@ -112,10 +150,22 @@ class _ExploreScreenState extends State<ExploreScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Padding(
-                            padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
-                            child: Text(
-                              localizations.featured,
-                              style: AppTextStyles.headlineSmall,
+                            padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  AppIcons.sparkleFill,
+                                  size: 18,
+                                  color: Theme.of(context).brightness == Brightness.dark
+                                      ? const Color(0xFF34D399)
+                                      : const Color(0xFF065F46),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  localizations.featured,
+                                  style: AppTextStyles.headlineSmall,
+                                ),
+                              ],
                             ),
                           ),
                           SizedBox(
@@ -124,22 +174,17 @@ class _ExploreScreenState extends State<ExploreScreen> {
                               scrollDirection: Axis.horizontal,
                               physics: const ClampingScrollPhysics(),
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 20,
+                                horizontal: 16,
                               ),
                               clipBehavior: Clip.none,
                               separatorBuilder: (context, index) =>
-                                  const SizedBox(width: 20),
+                                  const SizedBox(width: 16),
                               itemCount: vm.featuredBooks.length,
                               itemBuilder: (context, i) {
                                 final cardWidth =
-                                    MediaQuery.of(context).size.width - 60;
-                                return Container(
+                                    MediaQuery.of(context).size.width - 76;
+                                return SizedBox(
                                   width: cardWidth,
-                                  margin: EdgeInsets.only(
-                                    right: i < vm.featuredBooks.length - 1
-                                        ? 12
-                                        : 0,
-                                  ),
                                   child: FeaturedBookCard(
                                     book: vm.featuredBooks[i],
                                   ),
@@ -147,7 +192,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                               },
                             ),
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 12),
                         ],
                       ),
                     ),
@@ -155,7 +200,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   if (vm.categories.isNotEmpty)
                     SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.only(top: 4, bottom: 12),
                         child: CategoryChipRow(
                           categories: vm.categories,
                           selectedCategoryId: vm.selectedCategoryId,
@@ -166,7 +211,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   // Section label
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
                       child: Text(
                         vm.selectedCategoryId == null
                             ? localizations.all_stories
@@ -183,7 +228,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   ),
                   // Book list
                   if (vm.books.isEmpty)
-                    SliverToBoxAdapter(child: _buildEmpty(localizations))
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: _buildEmpty(localizations),
+                    )
                   else ...[
                     SliverList(
                       delegate: SliverChildBuilderDelegate(
@@ -231,7 +279,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
             children: [
               // Section label placeholder
               Container(
-                margin: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+                margin: const EdgeInsets.fromLTRB(16, 4, 16, 12),
                 height: 16,
                 width: 100,
                 decoration: BoxDecoration(
@@ -241,7 +289,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
               ),
               // Featured card placeholder
               Container(
-                margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                 height: 200,
                 decoration: BoxDecoration(
                   color: blockColor,
@@ -250,7 +298,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
               ),
               // Category chips placeholder
               Padding(
-                padding: const EdgeInsets.only(left: 20, bottom: 20),
+                padding: const EdgeInsets.only(left: 16, bottom: 12),
                 child: Row(
                   children: List.generate(
                     4,
@@ -268,7 +316,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
               ),
               // Section label placeholder
               Container(
-                margin: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                 height: 16,
                 width: 120,
                 decoration: BoxDecoration(
@@ -280,7 +328,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
               ...List.generate(
                 4,
                 (_) => Container(
-                  margin: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                  margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                   height: 110,
                   decoration: BoxDecoration(
                     color: blockColor,
@@ -297,6 +345,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   Widget _buildError(HomeViewModel vm) {
     final colorScheme = Theme.of(context).colorScheme;
+    final localizations = AppLocalizations.of(context)!;
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
@@ -318,14 +367,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
             ),
             const SizedBox(height: 24),
             Text(
-              'Oops! Something went wrong',
+              localizations.explore_error_title,
               style: AppTextStyles.headlineMedium,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 10),
             Text(
-              vm.error ??
-                  'We couldn\'t load the stories. Please check your connection and try again.',
+              vm.error ?? localizations.explore_error_description,
               style: AppTextStyles.bodyMedium,
               textAlign: TextAlign.center,
             ),
@@ -333,7 +381,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
             FilledButton.icon(
               onPressed: vm.refresh,
               icon: const Icon(Icons.refresh_rounded, size: 20),
-              label: const Text('Try Again'),
+              label: Text(localizations.explore_error_retry),
               style: FilledButton.styleFrom(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 28,

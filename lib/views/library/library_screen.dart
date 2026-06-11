@@ -1,4 +1,5 @@
 import 'package:children_stories/app/theme/app_text_styles.dart';
+import 'package:children_stories/l10n/app_localizations.dart';
 import 'package:children_stories/viewmodels/auth_viewmodel.dart';
 import 'package:children_stories/viewmodels/home_viewmodel.dart';
 import 'package:children_stories/viewmodels/library_viewmodel.dart';
@@ -49,6 +50,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
   @override
   Widget build(BuildContext context) {
     final authVM = context.watch<AuthViewModel>();
+    final localizations = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
@@ -56,7 +58,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
         scrolledUnderElevation: 0,
         centerTitle: true,
         title: Text(
-          'Library',
+          localizations.library_title,
           style: AppTextStyles.headlineLarge.copyWith(
             color: Theme.of(context).colorScheme.onSurface,
             fontWeight: FontWeight.w700,
@@ -106,6 +108,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   Widget _buildGuestView(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final localizations = AppLocalizations.of(context)!;
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
@@ -127,13 +130,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
             ),
             const SizedBox(height: 24),
             Text(
-              'Sign in to save stories',
+              localizations.library_guest_title,
               style: AppTextStyles.headlineMedium,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 10),
             Text(
-              'Keep track of your favorite stories and reading progress by creating an account.',
+              localizations.library_guest_description,
               style: AppTextStyles.bodyMedium,
               textAlign: TextAlign.center,
             ),
@@ -147,7 +150,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 ),
               ),
               child: Text(
-                'Sign In / Sign Up',
+                localizations.library_guest_button,
                 style: AppTextStyles.buttonLarge.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w800,
@@ -162,6 +165,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   Widget _buildEmptyView(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final localizations = AppLocalizations.of(context)!;
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 48),
@@ -183,13 +187,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
             ),
             const SizedBox(height: 24),
             Text(
-              'Your library is empty',
+              localizations.library_empty_title,
               style: AppTextStyles.headlineMedium,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 10),
             Text(
-              'Tap the bookmark icon on any story to save it here for quick access.',
+              localizations.library_empty_description,
               style: AppTextStyles.bodyMedium,
               textAlign: TextAlign.center,
             ),
@@ -201,6 +205,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   Widget _buildErrorView(LibraryViewModel vm) {
     final colorScheme = Theme.of(context).colorScheme;
+    final localizations = AppLocalizations.of(context)!;
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
@@ -222,13 +227,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
             ),
             const SizedBox(height: 24),
             Text(
-              'Oops! Something went wrong',
+              localizations.explore_error_title,
               style: AppTextStyles.headlineMedium,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 10),
             Text(
-              vm.error ?? 'We couldn\'t load your library. Please try again.',
+              vm.error ?? localizations.library_error_description,
               style: AppTextStyles.bodyMedium,
               textAlign: TextAlign.center,
             ),
@@ -236,7 +241,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
             FilledButton.icon(
               onPressed: vm.refresh,
               icon: const Icon(Icons.refresh_rounded, size: 20),
-              label: const Text('Try Again'),
+              label: Text(localizations.explore_error_retry),
               style: FilledButton.styleFrom(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 28,

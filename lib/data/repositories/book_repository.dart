@@ -5,6 +5,7 @@ import 'package:children_stories/data/models/book_page_model.dart';
 import 'package:children_stories/data/models/category_model.dart';
 import 'package:children_stories/data/models/language_model.dart';
 import 'package:flutter/foundation.dart' hide Category;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class BookRepository {
@@ -135,7 +136,21 @@ class BookRepository {
     final mutableData = Map<String, dynamic>.from(data);
     try {
       final originalUrl = mutableData['audio_url'] as String;
-      final path = _getStoragePath(originalUrl, SupabaseConstants.audioBucket);
+      var path = _getStoragePath(originalUrl, SupabaseConstants.audioBucket);
+
+      // Load the user's selected voice choice (default: 'kareem')
+      final prefs = await SharedPreferences.getInstance();
+      final selectedVoice = prefs.getString('selected_voice') ?? 'kareem';
+
+      // Prepend selected voice prefix (e.g. "kareem_") to the audio filename in the storage path
+      if (path.contains('/')) {
+        final parts = path.split('/');
+        final filename = parts.last;
+        parts[parts.length - 1] = '${selectedVoice}_$filename';
+        path = parts.join('/');
+      } else {
+        path = '${selectedVoice}_$path';
+      }
 
       // Generate a signed URL valid for 20 minutes (1200 seconds)
       final signedUrl = await _client.storage

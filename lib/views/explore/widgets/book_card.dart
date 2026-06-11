@@ -1,6 +1,7 @@
 import 'package:children_stories/app/theme/app_colors.dart';
 import 'package:children_stories/app/theme/app_text_styles.dart';
 import 'package:children_stories/data/models/book_model.dart';
+import 'package:children_stories/l10n/app_localizations.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -21,7 +22,7 @@ class BookCard extends StatelessWidget {
       child: Container(
         height:
             125, // Fixed height for performance, replacing costly IntrinsicHeight
-        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         decoration: BoxDecoration(
           color: colorScheme.surface,
           borderRadius: BorderRadius.circular(20),
@@ -37,7 +38,7 @@ class BookCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Cover
-            _buildCover(),
+            _buildCover(context),
             const SizedBox(width: 14),
             // Info
             Expanded(child: _buildInfo(context)),
@@ -48,7 +49,7 @@ class BookCard extends StatelessWidget {
     );
   }
 
-  Widget _buildCover() {
+  Widget _buildCover(BuildContext context) {
     return SizedBox(
       width: 90,
       child: Stack(
@@ -71,13 +72,13 @@ class BookCard extends StatelessWidget {
             Positioned(
               top: 8,
               left: 8,
-              child: _premiumBadge(),
+              child: _premiumBadge(context),
             ),
           if (book.isFeatured)
             Positioned(
               top: book.isPremium ? 28 : 8,
               left: 8,
-              child: _featuredBadge(),
+              child: _featuredBadge(context),
             ),
         ],
       ),
@@ -99,9 +100,21 @@ class BookCard extends StatelessWidget {
   );
 
   Widget _buildInfo(BuildContext context) {
-    final ageRangeText = '${book.ageMin}-${book.ageMax}';
-    final readTimeText = '${book.readTimeMinutes}';
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final isTurkish = Localizations.localeOf(context).languageCode == 'tr';
+    
+    final ageRangeText = isTurkish
+        ? '${book.ageMin}-${book.ageMax} yaş'
+        : '${book.ageMin}-${book.ageMax} yrs';
+    final readTimeText = isTurkish
+        ? '${book.readTimeMinutes} dk'
+        : '${book.readTimeMinutes} min';
     final pageCountText = '${book.pageCount}';
+
+    final ageColor = isDark ? const Color(0xFFE0D7FF) : AppColors.primary;
+    final timeColor = AppColors.accent;
+    final pageColor = isDark ? const Color(0xFFBAE6FD) : Colors.blue;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 14),
@@ -127,10 +140,10 @@ class BookCard extends StatelessWidget {
             spacing: 8,
             runSpacing: 6,
             children: [
-              _tag(context, Icons.child_care_rounded, ageRangeText),
-              _tag(context, Icons.schedule_rounded, readTimeText),
+              _tag(context, Icons.face_rounded, ageRangeText, ageColor),
+              _tag(context, Icons.access_time_rounded, readTimeText, timeColor),
               if (book.pageCount > 0)
-                _tag(context, Icons.menu_book_rounded, pageCountText),
+                _tag(context, Icons.menu_book_rounded, pageCountText, pageColor),
             ],
           ),
         ],
@@ -138,24 +151,17 @@ class BookCard extends StatelessWidget {
     );
   }
 
-  Widget _tag(BuildContext context, IconData icon, String text) {
+  Widget _tag(BuildContext context, IconData icon, String text, Color color) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final color = isDark
-        ? Colors.white.withValues(alpha: 0.9)
-        : theme.colorScheme.primary;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: isDark
-            ? theme.colorScheme.primary.withValues(alpha: 0.15)
-            : theme.colorScheme.primary.withValues(alpha: 0.05),
+        color: color.withValues(alpha: isDark ? 0.15 : 0.08),
         borderRadius: BorderRadius.circular(100),
         border: Border.all(
-          color: theme.colorScheme.primary.withValues(
-            alpha: isDark ? 0.3 : 0.1,
-          ),
+          color: color.withValues(alpha: isDark ? 0.3 : 0.1),
           width: 1,
         ),
       ),
@@ -176,15 +182,15 @@ class BookCard extends StatelessWidget {
     );
   }
 
-  Widget _premiumBadge() => Container(
+  Widget _premiumBadge(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
     decoration: BoxDecoration(
       color: const Color(0xFFFBBF24), // Yellowish/Amber
       borderRadius: BorderRadius.circular(6),
     ),
-    child: const Text(
-      'PREMIUM',
-      style: TextStyle(
+    child: Text(
+      AppLocalizations.of(context)!.badge_premium.toUpperCase(),
+      style: const TextStyle(
         fontSize: 7.5,
         fontWeight: FontWeight.w900,
         color: Color(0xFF1E1B4B),
@@ -193,7 +199,7 @@ class BookCard extends StatelessWidget {
     ),
   );
 
-  Widget _featuredBadge() => Container(
+  Widget _featuredBadge(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
     decoration: BoxDecoration(
       color: const Color(0xFFD1FAE5), // Mint Green
@@ -203,9 +209,9 @@ class BookCard extends StatelessWidget {
         width: 0.8,
       ),
     ),
-    child: const Text(
-      'FEATURED',
-      style: TextStyle(
+    child: Text(
+      AppLocalizations.of(context)!.badge_featured.toUpperCase(),
+      style: const TextStyle(
         fontSize: 7.5,
         fontWeight: FontWeight.w900,
         color: Color(0xFF065F46),

@@ -3,7 +3,7 @@ import 'package:children_stories/app/theme/app_text_styles.dart';
 import 'package:children_stories/core/constants/app_icons.dart';
 import 'package:children_stories/data/models/language_model.dart';
 import 'package:children_stories/l10n/app_localizations.dart';
-import 'package:children_stories/viewmodels/theme_viewmodel.dart';
+import 'package:children_stories/viewmodels/settings_viewmodel.dart';
 import 'package:country_flags/country_flags.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -15,10 +15,22 @@ class AppLanguageSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final blueColor = isDark ? const Color(0xFF64B5F6) : const Color(0xFF0288D1);
+    final blueColor = isDark
+        ? const Color(0xFF64B5F6)
+        : const Color(0xFF0288D1);
 
-    // Watch ThemeViewModel to register a rebuild dependency when theme changes
-    context.watch<ThemeViewModel>();
+    // Watch SettingsViewModel to register a rebuild dependency when settings changes
+    final settingsVM = context.watch<SettingsViewModel>();
+
+    final languages = const [
+      Language(id: 1, code: 'en', name: 'English', flagEmoji: '🇬🇧'),
+      Language(id: 2, code: 'tr', name: 'Türkçe', flagEmoji: '🇹🇷'),
+    ];
+    final selectedIndex = languages.indexWhere(
+      (l) => l.code == settingsVM.appLanguageCode,
+    );
+    final activeIndex = selectedIndex == -1 ? 0 : selectedIndex;
+    final currentLanguage = languages[activeIndex];
 
     return Container(
       decoration: BoxDecoration(
@@ -59,7 +71,7 @@ class AppLanguageSelector extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'EN',
+                currentLanguage.code.toUpperCase(),
                 style: AppTextStyles.bodyMedium.copyWith(
                   color: AppColors.textSecondary,
                   fontWeight: FontWeight.bold,
@@ -76,12 +88,10 @@ class AppLanguageSelector extends StatelessWidget {
           onTap: () {
             AppLanguageBottomSheet.show(
               context,
-              languages: const [
-                Language(id: 1, code: 'en', name: 'English', flagEmoji: '🇬🇧'),
-              ],
-              selectedIndex: 0,
+              languages: languages,
+              selectedIndex: activeIndex,
               onSelected: (index) {
-                // Şimdilik boş
+                settingsVM.setAppLanguage(languages[index].code);
               },
             );
           },
@@ -226,18 +236,15 @@ class AppLanguageBottomSheet extends StatelessWidget {
           splashColor: isSelected
               ? AppColors.primary.withValues(alpha: 0.1)
               : (isDark
-                  ? Colors.white.withValues(alpha: 0.06)
-                  : Colors.black.withValues(alpha: 0.04)),
+                    ? Colors.white.withValues(alpha: 0.06)
+                    : Colors.black.withValues(alpha: 0.04)),
           highlightColor: isSelected
               ? AppColors.primary.withValues(alpha: 0.05)
               : (isDark
-                  ? Colors.white.withValues(alpha: 0.03)
-                  : Colors.black.withValues(alpha: 0.02)),
+                    ? Colors.white.withValues(alpha: 0.03)
+                    : Colors.black.withValues(alpha: 0.02)),
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 20,
-              vertical: 16,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             child: Row(
               children: [
                 CountryFlags.flag(
@@ -252,7 +259,9 @@ class AppLanguageBottomSheet extends StatelessWidget {
                     name,
                     style: AppTextStyles.titleMedium.copyWith(
                       color: AppColors.textPrimary,
-                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                      fontWeight: isSelected
+                          ? FontWeight.w800
+                          : FontWeight.w600,
                     ),
                   ),
                 ),
@@ -262,7 +271,9 @@ class AppLanguageBottomSheet extends StatelessWidget {
                       : AppIcons.checkCircleRegular,
                   color: isSelected
                       ? AppColors.primary
-                      : (isDark ? Colors.white.withValues(alpha: 0.25) : Colors.grey.shade400),
+                      : (isDark
+                            ? Colors.white.withValues(alpha: 0.25)
+                            : Colors.grey.shade400),
                   size: 26,
                 ),
               ],
