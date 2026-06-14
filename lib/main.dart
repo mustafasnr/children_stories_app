@@ -4,11 +4,13 @@ import 'package:children_stories/core/constants/supabase_constants.dart';
 import 'package:adapty_flutter/adapty_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   await initializeDateFormatting();
 
   // Portrait only
@@ -28,7 +30,7 @@ Future<void> main() async {
   // Initialize Supabase
   await Supabase.initialize(
     url: SupabaseConstants.url,
-    anonKey: SupabaseConstants.anonKey,
+    publishableKey: SupabaseConstants.anonKey,
     authOptions: const FlutterAuthClientOptions(
       authFlowType: AuthFlowType.pkce,
     ),

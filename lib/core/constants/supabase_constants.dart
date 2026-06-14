@@ -1,10 +1,11 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 class SupabaseConstants {
   SupabaseConstants._();
 
-  static const String url = 'https://vqukoqhisyrqdqrmoqpy.supabase.co';
+  static String get url => dotenv.env['SUPABASE_URL'] ?? '';
 
-  static const String anonKey =
-      'sb_publishable_AmodbSpKE0xPjMAnzKcH5Q_Kmf8I3E1';
+  static String get anonKey => dotenv.env['SUPABASE_ANON_KEY'] ?? '';
 
   // Table names
   static const String languagesTable = 'languages';

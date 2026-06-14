@@ -247,11 +247,13 @@ class AppLanguageBottomSheet extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             child: Row(
               children: [
-                CountryFlags.flag(
+                CountryFlag.fromCountryCode(
                   countryCode,
-                  width: 30,
-                  height: 22,
-                  borderRadius: 4,
+                  theme: const ImageTheme(
+                    width: 30,
+                    height: 22,
+                    shape: RoundedRectangle(4),
+                  ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(

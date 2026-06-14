@@ -66,11 +66,13 @@ class StoryLanguageSelector extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  CountryFlags.flag(
+                  CountryFlag.fromCountryCode(
                     lang.countryCode,
-                    width: 20,
-                    height: 15,
-                    borderRadius: 3,
+                    theme: const ImageTheme(
+                      width: 20,
+                      height: 15,
+                      shape: RoundedRectangle(3),
+                    ),
                   ),
                   const SizedBox(width: 6),
                   Text(

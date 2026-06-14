@@ -108,11 +108,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            CountryFlags.flag(
+                            CountryFlag.fromCountryCode(
                               vm.selectedLanguage!.countryCode,
-                              width: 22,
-                              height: 16,
-                              borderRadius: 3,
+                              theme: const ImageTheme(
+                                width: 22,
+                                height: 16,
+                                shape: RoundedRectangle(3),
+                              ),
                             ),
                             const SizedBox(width: 8),
                             Text(
