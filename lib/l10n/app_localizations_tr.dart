@@ -94,10 +94,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get login_continue_without_sign_in => 'Giriş yapmadan devam et';
 
   @override
-  String get login_google_key_mismatch_warning =>
-      'Geliştirme ve yayınlama anahtaları aynı olmadığı için Google ile giriş şimdilik çalışmamaktadır.';
-
-  @override
   String get onboarding_age_title_3 => '2 - 5 Yaş';
 
   @override

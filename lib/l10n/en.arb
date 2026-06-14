@@ -30,7 +30,6 @@
   "login_continue_apple": "Continue",
   "login_not_now": "Not Now",
   "login_continue_without_sign_in": "Continue without signing in",
-  "login_google_key_mismatch_warning": "Google sign-in is currently unavailable because development and release keys do not match.",
   "onboarding_age_title_3": "2 - 5 Years Old",
   "onboarding_age_subtitle_3": "Picture books, lullabies & simple tales",
   "onboarding_age_stories_3": "150+ Stories",

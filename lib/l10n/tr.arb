@@ -30,7 +30,6 @@
   "login_continue_apple": "Devam Et",
   "login_not_now": "Şimdi Değil",
   "login_continue_without_sign_in": "Giriş yapmadan devam et",
-  "login_google_key_mismatch_warning": "Geliştirme ve yayınlama anahtaları aynı olmadığı için Google ile giriş şimdilik çalışmamaktadır.",
   "onboarding_age_title_3": "2 - 5 Yaş",
   "onboarding_age_subtitle_3": "Resimli kitaplar, ninniler ve basit masallar",
   "onboarding_age_stories_3": "150+ Hikaye",

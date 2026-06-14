@@ -94,10 +94,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get login_continue_without_sign_in => 'Continue without signing in';
 
   @override
-  String get login_google_key_mismatch_warning =>
-      'Google sign-in is currently unavailable because development and release keys do not match.';
-
-  @override
   String get onboarding_age_title_3 => '2 - 5 Years Old';
 
   @override

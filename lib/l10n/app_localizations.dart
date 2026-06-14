@@ -266,12 +266,6 @@ abstract class AppLocalizations {
   /// **'Continue without signing in'**
   String get login_continue_without_sign_in;
 
-  /// No description provided for @login_google_key_mismatch_warning.
-  ///
-  /// In en, this message translates to:
-  /// **'Google sign-in is currently unavailable because development and release keys do not match.'**
-  String get login_google_key_mismatch_warning;
-
   /// No description provided for @onboarding_age_title_3.
   ///
   /// In en, this message translates to:

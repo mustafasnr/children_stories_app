@@ -1,0 +1,23 @@
+flutter_native_splash:
+  # This package generates native code to customize Flutter's default white native splash screen
+  # with background color and splash image.
+  # Run the following command in the terminal after editing:
+  # dart run flutter_native_splash:create -p splash.yaml
+
+  # The background color of the splash screen
+  color: "#ffffff"
+  color_dark: "#121212"
+
+  # The image to display on the splash screen
+  image: assets/splash/splash_image.png
+  image_dark: assets/splash/splash_image.png
+
+  # Hide the notification bar (fullscreen)
+  fullscreen: true
+
+  # Android 12+ configuration (mandatory for newer Android versions)
+  android_12:
+    color: "#ffffff"
+    color_dark: "#121212"
+    image: assets/splash/splash_image.png
+    image_dark: assets/splash/splash_image.png
