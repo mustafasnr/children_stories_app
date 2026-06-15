@@ -3,6 +3,7 @@ import 'package:children_stories/viewmodels/auth_viewmodel.dart';
 import 'package:children_stories/views/auth/login_screen.dart';
 import 'package:children_stories/views/book_detail/book_detail_screen.dart';
 import 'package:children_stories/views/explore/explore_screen.dart';
+import 'package:children_stories/views/search/search_screen.dart';
 import 'package:children_stories/views/library/library_screen.dart';
 import 'package:children_stories/views/settings/settings_screen.dart';
 import 'package:children_stories/views/main/main_scaffold.dart';
@@ -84,6 +85,15 @@ class AppRouter {
                   path: '/explore',
                   name: 'explore',
                   builder: (_, _) => const ExploreScreen(),
+                ),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/search',
+                  name: 'search',
+                  builder: (_, _) => const SearchScreen(),
                 ),
               ],
             ),

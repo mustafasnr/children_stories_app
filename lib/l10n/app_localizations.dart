@@ -865,6 +865,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Settings'**
   String get nav_settings;
+
+  /// No description provided for @nav_search.
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get nav_search;
+
+  /// No description provided for @search_hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search stories...'**
+  String get search_hint;
+
+  /// No description provided for @search_no_results.
+  ///
+  /// In en, this message translates to:
+  /// **'No stories found'**
+  String get search_no_results;
+
+  /// No description provided for @search_no_results_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Try searching with different keywords or clearing filters'**
+  String get search_no_results_desc;
+
+  /// No description provided for @filter_category.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get filter_category;
+
+  /// No description provided for @filter_age.
+  ///
+  /// In en, this message translates to:
+  /// **'Age'**
+  String get filter_age;
+
+  /// No description provided for @filter_type.
+  ///
+  /// In en, this message translates to:
+  /// **'Type'**
+  String get filter_type;
+
+  /// No description provided for @filter_all.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get filter_all;
+
+  /// No description provided for @filter_free.
+  ///
+  /// In en, this message translates to:
+  /// **'Free'**
+  String get filter_free;
+
+  /// No description provided for @filter_premium.
+  ///
+  /// In en, this message translates to:
+  /// **'Premium'**
+  String get filter_premium;
+
+  /// No description provided for @filter_clear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Filters'**
+  String get filter_clear;
+
+  /// No description provided for @search_age_group_3.
+  ///
+  /// In en, this message translates to:
+  /// **'2-5 Years'**
+  String get search_age_group_3;
+
+  /// No description provided for @search_age_group_7.
+  ///
+  /// In en, this message translates to:
+  /// **'6-9 Years'**
+  String get search_age_group_7;
+
+  /// No description provided for @search_age_group_11.
+  ///
+  /// In en, this message translates to:
+  /// **'10-12 Years'**
+  String get search_age_group_11;
+
+  /// No description provided for @filter_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Filters'**
+  String get filter_title;
+
+  /// No description provided for @filter_apply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get filter_apply;
 }
 
 class _AppLocalizationsDelegate

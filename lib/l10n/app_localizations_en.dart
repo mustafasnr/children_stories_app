@@ -425,4 +425,53 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get nav_settings => 'Settings';
+
+  @override
+  String get nav_search => 'Search';
+
+  @override
+  String get search_hint => 'Search stories...';
+
+  @override
+  String get search_no_results => 'No stories found';
+
+  @override
+  String get search_no_results_desc =>
+      'Try searching with different keywords or clearing filters';
+
+  @override
+  String get filter_category => 'Category';
+
+  @override
+  String get filter_age => 'Age';
+
+  @override
+  String get filter_type => 'Type';
+
+  @override
+  String get filter_all => 'All';
+
+  @override
+  String get filter_free => 'Free';
+
+  @override
+  String get filter_premium => 'Premium';
+
+  @override
+  String get filter_clear => 'Clear Filters';
+
+  @override
+  String get search_age_group_3 => '2-5 Years';
+
+  @override
+  String get search_age_group_7 => '6-9 Years';
+
+  @override
+  String get search_age_group_11 => '10-12 Years';
+
+  @override
+  String get filter_title => 'Filters';
+
+  @override
+  String get filter_apply => 'Apply';
 }

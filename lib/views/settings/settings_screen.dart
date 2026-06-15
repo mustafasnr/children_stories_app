@@ -77,36 +77,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
               localizations.settings_default_reader_name;
 
           return Scaffold(
-            appBar: AppBar(
-              elevation: 0,
-              scrolledUnderElevation: 0,
-              centerTitle: true,
-              automaticallyImplyLeading: false,
-              toolbarHeight: kToolbarHeight,
-              title: Text(
-                localizations.settings_title,
-                style: AppTextStyles.headlineLarge.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            body: SingleChildScrollView(
-              physics: const ClampingScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Column(
-                children: [
-                  if (isAnonymous) ...[
-                    const AnonUpgradeCard(),
-                  ] else ...[
-                    UserHeader(
-                      avatarUrl: avatarUrl,
-                      name: name,
-                      email: user?.email,
-                      initials: profile?.initials,
-                      isPremium: isPremium,
-                    ),
-                  ],
+            body: SafeArea(
+              child: SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Column(
+                  children: [
+                    if (isAnonymous) ...[
+                      const AnonUpgradeCard(),
+                    ] else ...[
+                      UserHeader(
+                        avatarUrl: avatarUrl,
+                        name: name,
+                        email: user?.email,
+                        initials: profile?.initials,
+                        isPremium: isPremium,
+                      ),
+                    ],
                   const SizedBox(height: 24),
 
                   // Subscription status section
@@ -141,7 +128,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ],
               ),
             ),
-          );
+          ),
+        );
         },
       ),
     );

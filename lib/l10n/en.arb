@@ -181,5 +181,21 @@
   },
   "nav_explore": "Explore",
   "nav_library": "Library",
-  "nav_settings": "Settings"
+  "nav_settings": "Settings",
+  "nav_search": "Search",
+  "search_hint": "Search stories...",
+  "search_no_results": "No stories found",
+  "search_no_results_desc": "Try searching with different keywords or clearing filters",
+  "filter_category": "Category",
+  "filter_age": "Age",
+  "filter_type": "Type",
+  "filter_all": "All",
+  "filter_free": "Free",
+  "filter_premium": "Premium",
+  "filter_clear": "Clear Filters",
+  "search_age_group_3": "2-5 Years",
+  "search_age_group_7": "6-9 Years",
+  "search_age_group_11": "10-12 Years",
+  "filter_title": "Filters",
+  "filter_apply": "Apply"
 }

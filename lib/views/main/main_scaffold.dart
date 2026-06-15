@@ -64,6 +64,11 @@ class MainScaffold extends StatelessWidget {
                 label: localizations.nav_explore,
               ),
               NavigationDestination(
+                icon: const Icon(Icons.search_outlined),
+                selectedIcon: const Icon(Icons.search_rounded),
+                label: localizations.nav_search,
+              ),
+              NavigationDestination(
                 icon: const Icon(Icons.bookmarks_outlined),
                 selectedIcon: const Icon(Icons.bookmarks_rounded),
                 label: localizations.nav_library,

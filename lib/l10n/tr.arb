@@ -181,5 +181,21 @@
   },
   "nav_explore": "Keşfet",
   "nav_library": "Kütüphane",
-  "nav_settings": "Ayarlar"
+  "nav_settings": "Ayarlar",
+  "nav_search": "Ara",
+  "search_hint": "Hikaye ara...",
+  "search_no_results": "Hikaye bulunamadı",
+  "search_no_results_desc": "Farklı kelimeler aramayı veya filtreleri temizlemeyi deneyin",
+  "filter_category": "Kategori",
+  "filter_age": "Yaş",
+  "filter_type": "Tür",
+  "filter_all": "Hepsi",
+  "filter_free": "Ücretsiz",
+  "filter_premium": "Premium",
+  "filter_clear": "Filtreleri Temizle",
+  "search_age_group_3": "2-5 Yaş",
+  "search_age_group_7": "6-9 Yaş",
+  "search_age_group_11": "10-12 Yaş",
+  "filter_title": "Filtreler",
+  "filter_apply": "Uygula"
 }

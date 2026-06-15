@@ -6,6 +6,7 @@ import 'package:children_stories/viewmodels/home_viewmodel.dart';
 import 'package:children_stories/viewmodels/library_viewmodel.dart';
 import 'package:children_stories/viewmodels/subscription_viewmodel.dart';
 import 'package:children_stories/viewmodels/settings_viewmodel.dart';
+import 'package:children_stories/viewmodels/search_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:children_stories/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
@@ -23,6 +24,7 @@ class ChildrenStoriesApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => LibraryViewModel()),
         ChangeNotifierProvider(create: (_) => SubscriptionViewModel()),
         ChangeNotifierProvider(create: (_) => SettingsViewModel()),
+        ChangeNotifierProvider(create: (_) => SearchViewModel()),
       ],
       child: const _AppContent(),
     );

@@ -74,6 +74,48 @@ class BookRepository {
     return (data as List).map((e) => Book.fromJson(e)).toList();
   }
 
+  Future<List<Book>> searchBooks(
+    String languageCode, {
+    required String queryText,
+    List<int>? categoryIds,
+    List<int>? childAges,
+    bool? isPremium,
+    int limit = 10,
+    int offset = 0,
+  }) async {
+    var query = _client
+        .from(SupabaseConstants.booksTable)
+        .select('*, book_translations!inner(title, description)')
+        .eq('book_translations.language_code', languageCode);
+
+    final cleanQuery = queryText.trim();
+    if (cleanQuery.isNotEmpty) {
+      query = query.or(
+        'title.ilike.%$cleanQuery%,description.ilike.%$cleanQuery%',
+        referencedTable: 'book_translations',
+      );
+    }
+
+    if (categoryIds != null && categoryIds.isNotEmpty) {
+      query = query.inFilter('category_id', categoryIds);
+    }
+    if (childAges != null && childAges.isNotEmpty) {
+      final ageFilters = childAges
+          .map((age) => 'and(age_min.lte.$age,age_max.gte.$age)')
+          .join(',');
+      query = query.or(ageFilters);
+    }
+    if (isPremium != null) {
+      query = query.eq('is_premium', isPremium);
+    }
+
+    final data = await query
+        .order('created_at', ascending: false)
+        .range(offset, offset + limit - 1);
+
+    return (data as List).map((e) => Book.fromJson(e)).toList();
+  }
+
   Future<Book?> getBookById(String id, String languageCode) async {
     final data = await _client
         .from(SupabaseConstants.booksTable)

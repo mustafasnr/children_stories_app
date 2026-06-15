@@ -429,4 +429,53 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get nav_settings => 'Ayarlar';
+
+  @override
+  String get nav_search => 'Ara';
+
+  @override
+  String get search_hint => 'Hikaye ara...';
+
+  @override
+  String get search_no_results => 'Hikaye bulunamadı';
+
+  @override
+  String get search_no_results_desc =>
+      'Farklı kelimeler aramayı veya filtreleri temizlemeyi deneyin';
+
+  @override
+  String get filter_category => 'Kategori';
+
+  @override
+  String get filter_age => 'Yaş';
+
+  @override
+  String get filter_type => 'Tür';
+
+  @override
+  String get filter_all => 'Hepsi';
+
+  @override
+  String get filter_free => 'Ücretsiz';
+
+  @override
+  String get filter_premium => 'Premium';
+
+  @override
+  String get filter_clear => 'Filtreleri Temizle';
+
+  @override
+  String get search_age_group_3 => '2-5 Yaş';
+
+  @override
+  String get search_age_group_7 => '6-9 Yaş';
+
+  @override
+  String get search_age_group_11 => '10-12 Yaş';
+
+  @override
+  String get filter_title => 'Filtreler';
+
+  @override
+  String get filter_apply => 'Uygula';
 }

@@ -22,6 +22,9 @@ class UserHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Register dependency on Theme to rebuild when dark/light mode changes
+    Theme.of(context);
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(

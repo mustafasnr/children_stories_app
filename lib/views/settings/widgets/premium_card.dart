@@ -199,36 +199,16 @@ class _PremiumCardState extends State<PremiumCard>
                         ),
                       ],
                     ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () {
-                          if (isAnonymous) {
-                            ToastService.showInfo(
-                              localizations.settings_premium_signin_warning,
-                              onTap: () {
-                                context.push('/login?upgrade=true');
-                              },
-                            );
-                          } else {
-                            AdaptyService.showPaywall(context);
-                          }
-                        },
-                        borderRadius: BorderRadius.circular(12),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          child: Text(
-                            localizations.settings_upgrade_button,
-                            style: AppTextStyles.buttonLarge.copyWith(
-                              color: Colors.white,
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    child: Text(
+                      localizations.settings_upgrade_button,
+                      style: AppTextStyles.buttonLarge.copyWith(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),

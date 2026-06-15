@@ -50,59 +50,51 @@ class _LibraryScreenState extends State<LibraryScreen> {
   @override
   Widget build(BuildContext context) {
     final authVM = context.watch<AuthViewModel>();
-    final localizations = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        centerTitle: true,
-        title: Text(
-          localizations.library_title,
-          style: AppTextStyles.headlineLarge.copyWith(
-            color: Theme.of(context).colorScheme.onSurface,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ),
-      body: authVM.isAnonymous
-          ? _buildGuestView(context)
-          : Consumer<LibraryViewModel>(
-              builder: (context, vm, _) {
-                if (vm.isLoading) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (vm.error != null) {
-                  return _buildErrorView(vm);
-                }
-                if (vm.books.isEmpty) {
-                  return RefreshIndicator(
-                    color: Theme.of(context).colorScheme.primary,
-                    onRefresh: vm.refresh,
-                    child: ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      children: [
-                        SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.7,
-                          child: _buildEmptyView(context),
-                        ),
-                      ],
-                    ),
-                  );
-                }
+    Widget content = authVM.isAnonymous
+        ? _buildGuestView(context)
+        : Consumer<LibraryViewModel>(
+            builder: (context, vm, _) {
+              if (vm.isLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (vm.error != null) {
+                return _buildErrorView(vm);
+              }
+              if (vm.books.isEmpty) {
                 return RefreshIndicator(
-                  color: Theme.of(context).colorScheme.primary,
+                  color: theme.colorScheme.primary,
                   onRefresh: vm.refresh,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    itemCount: vm.books.length,
-                    itemBuilder: (context, index) {
-                      return BookCard(book: vm.books[index]);
-                    },
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: [
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height * 0.7,
+                        child: _buildEmptyView(context),
+                      ),
+                    ],
                   ),
                 );
-              },
-            ),
+              }
+              return RefreshIndicator(
+                color: theme.colorScheme.primary,
+                onRefresh: vm.refresh,
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  itemCount: vm.books.length,
+                  itemBuilder: (context, index) {
+                    return BookCard(book: vm.books[index]);
+                  },
+                ),
+              );
+            },
+          );
+
+    return Scaffold(
+      body: SafeArea(
+        child: content,
+      ),
     );
   }
 

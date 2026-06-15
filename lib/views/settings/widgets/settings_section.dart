@@ -49,7 +49,7 @@ class SettingsSection extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         AppLanguageSelector(),
-        if (!isAnonymous) ...[
+        if (!isAnonymous || authVM.isLoading) ...[
           const SizedBox(height: 12),
           _buildTile(
             context: context,
@@ -57,13 +57,29 @@ class SettingsSection extends StatelessWidget {
             title: localizations.settings_sign_out,
             iconColor: AppColors.error,
             textColor: AppColors.error,
-            trailing: const SizedBox.shrink(),
-            onTap: () async {
-              await context.read<AuthViewModel>().signOut();
-              if (context.mounted) {
-                RestartWidget.restartApp(context);
-              }
-            },
+            trailing: authVM.isLoading
+                ? SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.error),
+                    ),
+                  )
+                : const SizedBox.shrink(),
+            onTap: authVM.isLoading
+                ? null
+                : () async {
+                    if (context.read<AuthViewModel>().isLoading) return;
+                    try {
+                      await context.read<AuthViewModel>().signOut();
+                    } catch (e) {
+                      debugPrint('[SettingsSection] Sign out error: $e');
+                    }
+                    if (context.mounted) {
+                      RestartWidget.restartApp(context);
+                    }
+                  },
           ),
         ],
       ],
@@ -75,7 +91,7 @@ class SettingsSection extends StatelessWidget {
     required IconData icon,
     required String title,
     Widget? trailing,
-    required VoidCallback onTap,
+    required VoidCallback? onTap,
     Color? iconColor,
     Color? textColor,
   }) {
