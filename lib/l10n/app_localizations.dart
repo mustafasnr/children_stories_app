@@ -961,6 +961,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Apply'**
   String get filter_apply;
+
+  /// No description provided for @update_required_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Update Required'**
+  String get update_required_title;
+
+  /// No description provided for @update_required_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'A new version of Children Stories is available. Please update the application to continue.'**
+  String get update_required_desc;
+
+  /// No description provided for @update_button.
+  ///
+  /// In en, this message translates to:
+  /// **'Update Now'**
+  String get update_button;
+
+  /// No description provided for @update_optional_toast.
+  ///
+  /// In en, this message translates to:
+  /// **'A new update is available. Tap here to update!'**
+  String get update_optional_toast;
 }
 
 class _AppLocalizationsDelegate

@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:children_stories/app/theme/app_colors.dart';
 import 'package:children_stories/app/theme/app_text_styles.dart';
 import 'package:children_stories/core/services/adapty_service.dart';
@@ -171,34 +173,30 @@ class _PremiumCardState extends State<PremiumCard>
               : AnimatedBuilder(
                   animation: _controller,
                   builder: (context, child) {
-                    return CustomPaint(
-                      foregroundPainter: GlowBorderPainter(
-                        animationValue: _controller.value,
-                        color: Colors.white,
-                        borderRadius: 12,
+                    return Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: colorScheme.primary.withValues(alpha: 0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
                       ),
-                      child: child,
+                      child: CustomPaint(
+                        painter: GlowBackgroundPainter(
+                          animationValue: _controller.value,
+                          baseColor1: colorScheme.primary,
+                          baseColor2: colorScheme.primary.withValues(alpha: 0.7),
+                          glowColor: Colors.white,
+                          borderRadius: 12,
+                        ),
+                        child: child,
+                      ),
                     );
                   },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          colorScheme.primary,
-                          colorScheme.primary.withValues(alpha: 0.7),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: colorScheme.primary.withValues(alpha: 0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                    ),
+                  child: Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 8,
@@ -233,81 +231,68 @@ class _PremiumCardState extends State<PremiumCard>
   }
 }
 
-class GlowBorderPainter extends CustomPainter {
+class GlowBackgroundPainter extends CustomPainter {
   final double animationValue;
-  final Color color;
+  final Color baseColor1;
+  final Color baseColor2;
+  final Color glowColor;
   final double borderRadius;
 
-  GlowBorderPainter({
+  GlowBackgroundPainter({
     required this.animationValue,
-    required this.color,
+    required this.baseColor1,
+    required this.baseColor2,
+    required this.glowColor,
     required this.borderRadius,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final path = Path()
-      ..addRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTWH(0, 0, size.width, size.height),
-          Radius.circular(borderRadius),
-        ),
-      );
+    final rect = Rect.fromLTWH(0, 0, size.width, size.height);
+    final rrect = RRect.fromRectAndRadius(rect, Radius.circular(borderRadius));
 
-    final metrics = path.computeMetrics().toList();
-    if (metrics.isEmpty) return;
+    // Clip to the button's rounded rectangle
+    canvas.save();
+    canvas.clipRRect(rrect);
 
-    final metric = metrics.first;
-    final totalLength = metric.length;
+    // Draw base background gradient
+    final basePaint = Paint()
+      ..shader = LinearGradient(
+        colors: [baseColor1, baseColor2],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ).createShader(rect);
+    canvas.drawRect(rect, basePaint);
 
-    // Glowing segment is 22% of total perimeter
-    final segmentLength = totalLength * 0.22;
-    final start = (animationValue * totalLength) % totalLength;
-    final end = start + segmentLength;
+    // Calculate moving glow center using a figure-8 Lissajous path
+    final angle = animationValue * 2 * 3.141592653589793;
+    final dx = size.width / 2 + sin(angle) * (size.width / 2 - 5);
+    final dy = size.height / 2 + sin(angle * 2) * (size.height / 2 - 5);
+    final glowCenter = Offset(dx, dy);
 
-    Path extractPath;
-    if (end <= totalLength) {
-      extractPath = metric.extractPath(start, end);
-    } else {
-      extractPath = metric.extractPath(start, totalLength);
-      extractPath.addPath(
-        metric.extractPath(0.0, end % totalLength),
-        Offset.zero,
-      );
-    }
+    // Draw the glowing light spot (orb)
+    final glowPaint = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          glowColor.withValues(alpha: 0.35),
+          glowColor.withValues(alpha: 0.12),
+          glowColor.withValues(alpha: 0.0),
+        ],
+        stops: const [0.0, 0.5, 1.0],
+      ).createShader(Rect.fromCircle(center: glowCenter, radius: size.width * 0.7));
 
-    // Layer 1: Outer glow (very soft and wide)
-    final outerGlowPaint = Paint()
-      ..color = color.withValues(alpha: 0.18)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 7.0
-      ..strokeCap = StrokeCap.round
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.0);
-    canvas.drawPath(extractPath, outerGlowPaint);
+    glowPaint.blendMode = BlendMode.screen;
+    canvas.drawCircle(glowCenter, size.width * 0.7, glowPaint);
 
-    // Layer 2: Inner glow (brighter, slightly less blurred)
-    final innerGlowPaint = Paint()
-      ..color = color.withValues(alpha: 0.45)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 4.0
-      ..strokeCap = StrokeCap.round
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.8);
-    canvas.drawPath(extractPath, innerGlowPaint);
-
-    // Layer 3: Soft highlight core (anchors the light source, blurred slightly to stay soft)
-    final corePaint = Paint()
-      ..color = color.withValues(alpha: 0.75)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.8
-      ..strokeCap = StrokeCap.round
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 0.4);
-    canvas.drawPath(extractPath, corePaint);
+    canvas.restore();
   }
 
   @override
-  bool shouldRepaint(covariant GlowBorderPainter oldDelegate) {
+  bool shouldRepaint(covariant GlowBackgroundPainter oldDelegate) {
     return oldDelegate.animationValue != animationValue ||
-        oldDelegate.color != color ||
+        oldDelegate.baseColor1 != baseColor1 ||
+        oldDelegate.baseColor2 != baseColor2 ||
+        oldDelegate.glowColor != glowColor ||
         oldDelegate.borderRadius != borderRadius;
   }
 }

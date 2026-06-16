@@ -197,5 +197,10 @@
   "search_age_group_7": "6-9 Yaş",
   "search_age_group_11": "10-12 Yaş",
   "filter_title": "Filtreler",
-  "filter_apply": "Uygula"
+  "filter_apply": "Uygula",
+  "update_required_title": "Güncelleme Gerekli",
+  "update_required_desc": "Çocuk Hikayeleri uygulamasının yeni bir sürümü mevcut. Devam etmek için lütfen uygulamayı güncelleyin.",
+  "update_button": "Şimdi Güncelle",
+  "update_optional_toast": "Yeni bir güncelleme mevcut. Güncellemek için tıklayın!"
 }
+

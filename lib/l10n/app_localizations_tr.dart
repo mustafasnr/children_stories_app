@@ -478,4 +478,18 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get filter_apply => 'Uygula';
+
+  @override
+  String get update_required_title => 'Güncelleme Gerekli';
+
+  @override
+  String get update_required_desc =>
+      'Çocuk Hikayeleri uygulamasının yeni bir sürümü mevcut. Devam etmek için lütfen uygulamayı güncelleyin.';
+
+  @override
+  String get update_button => 'Şimdi Güncelle';
+
+  @override
+  String get update_optional_toast =>
+      'Yeni bir güncelleme mevcut. Güncellemek için tıklayın!';
 }

@@ -197,5 +197,10 @@
   "search_age_group_7": "6-9 Years",
   "search_age_group_11": "10-12 Years",
   "filter_title": "Filters",
-  "filter_apply": "Apply"
+  "filter_apply": "Apply",
+  "update_required_title": "Update Required",
+  "update_required_desc": "A new version of Children Stories is available. Please update the application to continue.",
+  "update_button": "Update Now",
+  "update_optional_toast": "A new update is available. Tap here to update!"
 }
+

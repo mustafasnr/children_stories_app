@@ -474,4 +474,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get filter_apply => 'Apply';
+
+  @override
+  String get update_required_title => 'Update Required';
+
+  @override
+  String get update_required_desc =>
+      'A new version of Children Stories is available. Please update the application to continue.';
+
+  @override
+  String get update_button => 'Update Now';
+
+  @override
+  String get update_optional_toast =>
+      'A new update is available. Tap here to update!';
 }

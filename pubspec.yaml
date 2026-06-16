@@ -2,7 +2,7 @@ name: children_stories
 description: "Children Stories - A premium children's books & audio stories app"
 publish_to: 'none'
 
-version: 1.0.6+7
+version: 1.0.7+8
 
 environment:
   sdk: ^3.8.0
@@ -33,6 +33,7 @@ dependencies:
   url_launcher: ^6.3.2
   package_info_plus: ^10.1.0
   flutter_dotenv: ^5.2.1
+  version: ^3.0.2
 
 dev_dependencies:
   flutter_test:

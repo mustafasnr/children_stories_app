@@ -1,6 +1,11 @@
 import 'package:children_stories/app/app.dart';
 import 'package:children_stories/core/constants/app_constants.dart';
 import 'package:children_stories/core/constants/supabase_constants.dart';
+import 'package:children_stories/core/services/toast_service.dart';
+import 'package:children_stories/services/app_update_service.dart';
+import 'package:children_stories/widgets/force_update_dialog.dart';
+import 'package:children_stories/l10n/app_localizations.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:adapty_flutter/adapty_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -47,4 +52,34 @@ Future<void> main() async {
   }
 
   runApp(const RestartWidget(child: ChildrenStoriesApp()));
+
+  // Check for app updates
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    final updateResult = await AppUpdateService.checkUpdate();
+    if (updateResult != null) {
+      final context = ToastService.navigatorKey.currentContext;
+      if (context != null && context.mounted) {
+        if (updateResult.isForce) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => ForceUpdateDialog(storeUrl: updateResult.storeUrl),
+          );
+        } else {
+          final localizations = AppLocalizations.of(context);
+          final toastMessage = localizations?.update_optional_toast ??
+              'A new update is available. Tap here to update!';
+          ToastService.showInfo(
+            toastMessage,
+            onTap: () async {
+              final uri = Uri.parse(updateResult.storeUrl);
+              if (await canLaunchUrl(uri)) {
+                await launchUrl(uri, mode: LaunchMode.externalApplication);
+              }
+            },
+          );
+        }
+      }
+    }
+  });
 }
