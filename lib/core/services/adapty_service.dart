@@ -1,6 +1,8 @@
 import 'package:adapty_flutter/adapty_flutter.dart';
 import 'package:children_stories/core/constants/app_constants.dart';
 import 'package:children_stories/viewmodels/subscription_viewmodel.dart';
+import 'package:children_stories/core/services/toast_service.dart';
+import 'package:children_stories/l10n/app_localizations.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -66,9 +68,9 @@ class AdaptyService {
     } catch (e) {
       debugPrint('[Adapty] showPaywall error: $e');
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to load paywall: $e')));
+        final localizations = AppLocalizations.of(context);
+        final errorMsg = localizations?.generic_error ?? 'An error occurred. Please try again.';
+        ToastService.showError(errorMsg);
       }
     }
   }

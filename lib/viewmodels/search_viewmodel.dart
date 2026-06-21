@@ -20,6 +20,11 @@ class SearchViewModel extends ChangeNotifier {
   String? _error;
   String _lastLanguageCode = '';
 
+  // Cache for default search results (no filters, empty query)
+  List<Book> _defaultSearchResults = [];
+  bool _defaultHasMore = true;
+  int _defaultCurrentPage = 0;
+
   // Getters
   String get searchQuery => _searchQuery;
   Set<int> get selectedCategoryIds => _selectedCategoryIds;
@@ -50,12 +55,33 @@ class SearchViewModel extends ChangeNotifier {
   }
 
   /// Initialize or refresh search results
-  Future<void> search(String queryText, String languageCode, {bool forceLoadingState = true}) async {
+  Future<void> search(
+    String queryText,
+    String languageCode, {
+    bool forceLoadingState = true,
+  }) async {
     _searchQuery = queryText;
     _currentPage = 0;
     _hasMore = true;
     _error = null;
-    
+
+    if (_lastLanguageCode != languageCode) {
+      _defaultSearchResults = [];
+      _defaultHasMore = true;
+      _defaultCurrentPage = 0;
+    }
+
+    if (queryText.trim().isEmpty && !hasActiveFilters) {
+      if (_defaultSearchResults.isNotEmpty) {
+        _searchResults = List.from(_defaultSearchResults);
+        _currentPage = _defaultCurrentPage;
+        _hasMore = _defaultHasMore;
+        _isLoading = false;
+        notifyListeners();
+        return;
+      }
+    }
+
     if (forceLoadingState) {
       _isLoading = true;
       notifyListeners();
@@ -77,6 +103,12 @@ class SearchViewModel extends ChangeNotifier {
       _searchResults = results;
       if (results.length < 10) {
         _hasMore = false;
+      }
+
+      if (queryText.trim().isEmpty && !hasActiveFilters) {
+        _defaultSearchResults = List.from(results);
+        _defaultCurrentPage = _currentPage;
+        _defaultHasMore = _hasMore;
       }
     } catch (e) {
       _error = 'Failed to load search results. Please try again.';
@@ -117,6 +149,12 @@ class SearchViewModel extends ChangeNotifier {
           _hasMore = false;
         }
         _searchResults = [..._searchResults, ...nextResults];
+      }
+
+      if (_searchQuery.trim().isEmpty && !hasActiveFilters) {
+        _defaultSearchResults = List.from(_searchResults);
+        _defaultCurrentPage = _currentPage;
+        _defaultHasMore = _hasMore;
       }
     } catch (e) {
       debugPrint('[SearchVM] loadNextPage error: $e');
@@ -161,7 +199,7 @@ class SearchViewModel extends ChangeNotifier {
     _selectedAges.clear();
     _selectedAges.addAll(ages);
     _selectedIsPremium = isPremium;
-    
+
     await search(_searchQuery, languageCode, forceLoadingState: true);
   }
 

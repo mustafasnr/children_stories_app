@@ -83,7 +83,7 @@
   "settings_title": "Ayarlar",
   "settings_default_reader_name": "Okur",
   "settings_dark_mode": "Karanlık Tema",
-  "settings_story_sounds": "Hikaye Sesleri",
+  "settings_story_sounds": "Ses Efektleri",
   "settings_sign_out": "Çıkış Yap",
   "settings_text_size": "Metin Boyutu",
   "settings_text_size_small": "Küçük",
@@ -180,10 +180,13 @@
     }
   },
   "nav_explore": "Keşfet",
+  "explore_title": "Hikayeleri Keşfet",
   "nav_library": "Kütüphane",
   "nav_settings": "Ayarlar",
   "nav_search": "Ara",
   "search_hint": "Hikaye ara...",
+  "search_initial_title": "Hikaye Ara",
+  "search_initial_desc": "Yukarıya yazarak en sevdiğiniz masal ve hikayeleri bulun.",
   "search_no_results": "Hikaye bulunamadı",
   "search_no_results_desc": "Farklı kelimeler aramayı veya filtreleri temizlemeyi deneyin",
   "filter_category": "Kategori",
@@ -201,6 +204,7 @@
   "update_required_title": "Güncelleme Gerekli",
   "update_required_desc": "Çocuk Hikayeleri uygulamasının yeni bir sürümü mevcut. Devam etmek için lütfen uygulamayı güncelleyin.",
   "update_button": "Şimdi Güncelle",
-  "update_optional_toast": "Yeni bir güncelleme mevcut. Güncellemek için tıklayın!"
+  "update_optional_toast": "Yeni bir güncelleme mevcut. Güncellemek için tıklayın!",
+  "generic_error": "Bir hata oluştu. Lütfen tekrar deneyin."
 }
 

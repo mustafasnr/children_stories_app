@@ -503,7 +503,7 @@ abstract class AppLocalizations {
   /// No description provided for @settings_story_sounds.
   ///
   /// In en, this message translates to:
-  /// **'Story Sounds'**
+  /// **'Sound Effects'**
   String get settings_story_sounds;
 
   /// No description provided for @settings_sign_out.
@@ -854,6 +854,12 @@ abstract class AppLocalizations {
   /// **'Explore'**
   String get nav_explore;
 
+  /// No description provided for @explore_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Explore Stories'**
+  String get explore_title;
+
   /// No description provided for @nav_library.
   ///
   /// In en, this message translates to:
@@ -877,6 +883,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Search stories...'**
   String get search_hint;
+
+  /// No description provided for @search_initial_title.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Stories'**
+  String get search_initial_title;
+
+  /// No description provided for @search_initial_desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Find your favorite stories and fairy tales by typing above.'**
+  String get search_initial_desc;
 
   /// No description provided for @search_no_results.
   ///
@@ -985,6 +1003,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A new update is available. Tap here to update!'**
   String get update_optional_toast;
+
+  /// No description provided for @generic_error.
+  ///
+  /// In en, this message translates to:
+  /// **'An error occurred. Please try again.'**
+  String get generic_error;
 }
 
 class _AppLocalizationsDelegate

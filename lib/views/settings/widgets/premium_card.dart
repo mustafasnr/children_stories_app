@@ -21,6 +21,7 @@ class PremiumCard extends StatefulWidget {
 class _PremiumCardState extends State<PremiumCard>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
+  bool _isPaywallOpening = false;
 
   @override
   void initState() {
@@ -213,7 +214,8 @@ class _PremiumCardState extends State<PremiumCard>
                 ),
           onTap: isPremium
               ? null
-              : () {
+              : () async {
+                  if (_isPaywallOpening) return;
                   if (isAnonymous) {
                     ToastService.showInfo(
                       localizations.settings_premium_signin_warning,
@@ -222,7 +224,18 @@ class _PremiumCardState extends State<PremiumCard>
                       },
                     );
                   } else {
-                    AdaptyService.showPaywall(context);
+                    setState(() {
+                      _isPaywallOpening = true;
+                    });
+                    try {
+                      await AdaptyService.showPaywall(context);
+                    } finally {
+                      if (mounted) {
+                        setState(() {
+                          _isPaywallOpening = false;
+                        });
+                      }
+                    }
                   }
                 },
         ),

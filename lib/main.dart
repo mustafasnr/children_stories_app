@@ -36,8 +36,11 @@ Future<void> main() async {
   await Supabase.initialize(
     url: SupabaseConstants.url,
     publishableKey: SupabaseConstants.anonKey,
-    authOptions: const FlutterAuthClientOptions(
+    authOptions: FlutterAuthClientOptions(
       authFlowType: AuthFlowType.pkce,
+      localStorage: SharedPreferencesLocalStorage(
+        persistSessionKey: 'children_stories_auth_token',
+      ),
     ),
   );
 
@@ -63,11 +66,13 @@ Future<void> main() async {
           showDialog(
             context: context,
             barrierDismissible: false,
-            builder: (context) => ForceUpdateDialog(storeUrl: updateResult.storeUrl),
+            builder: (context) =>
+                ForceUpdateDialog(storeUrl: updateResult.storeUrl),
           );
         } else {
           final localizations = AppLocalizations.of(context);
-          final toastMessage = localizations?.update_optional_toast ??
+          final toastMessage =
+              localizations?.update_optional_toast ??
               'A new update is available. Tap here to update!';
           ToastService.showInfo(
             toastMessage,

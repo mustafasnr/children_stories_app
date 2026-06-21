@@ -64,6 +64,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   void _performSearch(String query) {
     _focusNode.unfocus();
+    if (query.trim().isEmpty) return;
     final homeVM = context.read<HomeViewModel>();
     final langCode = homeVM.selectedLanguage?.code ?? 'en';
     context.read<SearchViewModel>().search(query, langCode);
@@ -192,7 +193,10 @@ class _SearchScreenState extends State<SearchScreen> {
           hintStyle: AppTextStyles.bodyMedium.copyWith(
             color: isDark ? AppColors.textSecondary : AppColors.textHint,
           ),
-          prefixIcon: Icon(Icons.search_rounded, color: AppColors.primary),
+          prefixIcon: Icon(
+            Icons.search_rounded,
+            color: _controller.text.trim().isEmpty ? AppColors.textHint : AppColors.primary,
+          ),
           suffixIcon: vm.isLoading
               ? Padding(
                   padding: const EdgeInsets.all(14.0),
@@ -214,12 +218,17 @@ class _SearchScreenState extends State<SearchScreen> {
                         onPressed: () {
                           _controller.clear();
                           setState(() {});
-                          _performSearch('');
+                          final homeVM = context.read<HomeViewModel>();
+                          final langCode = homeVM.selectedLanguage?.code ?? 'en';
+                          context.read<SearchViewModel>().search('', langCode);
                         },
                       ),
                     IconButton(
-                      icon: Icon(Icons.arrow_forward_rounded, color: AppColors.primary),
-                      onPressed: () => _performSearch(_controller.text),
+                      icon: Icon(
+                        Icons.arrow_forward_rounded,
+                        color: _controller.text.trim().isEmpty ? AppColors.textHint : AppColors.primary,
+                      ),
+                      onPressed: _controller.text.trim().isEmpty ? null : () => _performSearch(_controller.text),
                     ),
                   ],
                 ),
@@ -767,4 +776,5 @@ class _SearchScreenState extends State<SearchScreen> {
       ),
     );
   }
+
 }

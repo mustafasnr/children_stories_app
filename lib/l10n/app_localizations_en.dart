@@ -221,7 +221,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settings_dark_mode => 'Dark Mode';
 
   @override
-  String get settings_story_sounds => 'Story Sounds';
+  String get settings_story_sounds => 'Sound Effects';
 
   @override
   String get settings_sign_out => 'Sign Out';
@@ -421,6 +421,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get nav_explore => 'Explore';
 
   @override
+  String get explore_title => 'Explore Stories';
+
+  @override
   String get nav_library => 'Library';
 
   @override
@@ -431,6 +434,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get search_hint => 'Search stories...';
+
+  @override
+  String get search_initial_title => 'Search Stories';
+
+  @override
+  String get search_initial_desc =>
+      'Find your favorite stories and fairy tales by typing above.';
 
   @override
   String get search_no_results => 'No stories found';
@@ -488,4 +498,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get update_optional_toast =>
       'A new update is available. Tap here to update!';
+
+  @override
+  String get generic_error => 'An error occurred. Please try again.';
 }

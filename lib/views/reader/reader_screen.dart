@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:ui' show ImageFilter;
 import 'package:flutter/services.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:children_stories/app/theme/app_colors.dart';
 import 'package:children_stories/app/theme/app_text_styles.dart';
 import 'package:children_stories/core/constants/app_icons.dart';
@@ -30,6 +32,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
   late final ReaderViewModel _vm;
   late final PageController _pageController;
   late final AudioService _audioService;
+  late final AudioPlayer _effectPlayer;
   bool _audioInitialized = false;
   StreamSubscription<Duration>? _positionSubscription;
   StreamSubscription<PlayerState>? _playerStateSubscription;
@@ -51,6 +54,12 @@ class _ReaderScreenState extends State<ReaderScreen> {
     _vm = ReaderViewModel();
     _pageController = PageController();
     _audioService = AudioService();
+    _effectPlayer = AudioPlayer();
+    _effectPlayer.setVolume(0.4);
+    _effectPlayer.setAsset('assets/audio/page_flip.mp3').catchError((e) {
+      debugPrint('Error loading page flip sound: $e');
+      return null;
+    });
     _vm.addListener(_onVMChange);
     final langCode =
         context.read<HomeViewModel>().selectedLanguage?.code ?? 'en';
@@ -77,9 +86,25 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
     if (!_vm.isLoading && _vm.pages.isNotEmpty) {
       if (_vm.currentPageIndex != _lastPageIndex) {
+        final wasInitial = _lastPageIndex == -1;
         _lastPageIndex = _vm.currentPageIndex;
         _triggerPageIndicator();
+        if (!wasInitial) {
+          _playPageFlipSound();
+        }
       }
+    }
+  }
+
+  void _playPageFlipSound() {
+    final settingsVM = context.read<SettingsViewModel>();
+    if (!settingsVM.storySoundsEnabled) return;
+
+    try {
+      _effectPlayer.seek(Duration.zero);
+      _effectPlayer.play();
+    } catch (e) {
+      debugPrint('Error playing page flip sound: $e');
     }
   }
 
@@ -134,6 +159,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
     _playerStateSubscription?.cancel();
     _mockTimer?.cancel();
     _indicatorTimer?.cancel();
+    _effectPlayer.dispose();
     _audioService.dispose();
     super.dispose();
   }
@@ -407,7 +433,9 @@ class _ReaderScreenState extends State<ReaderScreen> {
                   const SizedBox(height: 12),
                   Center(
                     child: Text(
-                      localizations.reader_font_size_preview(settingsVM.storyTextSize.toInt()),
+                      localizations.reader_font_size_preview(
+                        settingsVM.storyTextSize.toInt(),
+                      ),
                       style: AppTextStyles.labelMedium.copyWith(
                         color: AppColors.textSecondary,
                       ),
@@ -471,7 +499,8 @@ class _ReaderScreenState extends State<ReaderScreen> {
                                 ),
                                 const SizedBox(height: 12),
                                 Text(
-                                  vm.error ?? localizations.reader_no_pages_description,
+                                  vm.error ??
+                                      localizations.reader_no_pages_description,
                                   style: AppTextStyles.bodyMedium.copyWith(
                                     color: AppColors.textSecondary,
                                     height: 1.5,
@@ -612,6 +641,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
   Widget _buildTopBar(BuildContext context, ReaderViewModel vm) {
     final settingsVM = context.watch<SettingsViewModel>();
+    final localizations = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       decoration: BoxDecoration(
@@ -626,6 +656,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
       child: Row(
         children: [
           IconButton(
+            tooltip: localizations.reader_go_back,
             icon: const Icon(Icons.close_rounded),
             onPressed: () => context.pop(),
             style: IconButton.styleFrom(
@@ -646,6 +677,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
             ),
           ),
           IconButton(
+            tooltip: localizations.settings_dark_mode,
             icon: Icon(
               settingsVM.isDarkMode
                   ? Icons.light_mode_rounded
@@ -662,6 +694,24 @@ class _ReaderScreenState extends State<ReaderScreen> {
           ),
           const SizedBox(width: 8),
           IconButton(
+            tooltip: localizations.settings_story_sounds,
+            icon: Icon(
+              settingsVM.storySoundsEnabled
+                  ? Icons.volume_up_rounded
+                  : Icons.volume_off_rounded,
+            ),
+            onPressed: () {
+              settingsVM.setStorySoundsEnabled(!settingsVM.storySoundsEnabled);
+            },
+            style: IconButton.styleFrom(
+              backgroundColor: AppColors.surfaceVariant.withValues(alpha: 0.4),
+              foregroundColor: AppColors.textPrimary,
+              shape: const CircleBorder(),
+            ),
+          ),
+          const SizedBox(width: 8),
+          IconButton(
+            tooltip: localizations.settings_text_size,
             icon: const Icon(Icons.format_size_rounded),
             onPressed: () => _showTextSizeDialog(context),
             style: IconButton.styleFrom(
@@ -697,68 +747,166 @@ class _ReaderScreenState extends State<ReaderScreen> {
   Widget _buildPageContent(ReaderViewModel vm, BookPage page) {
     final isDark = context.watch<SettingsViewModel>().isDarkMode;
     final imgUrl = _getIllustrationUrl(page.imageUrl);
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Container(
-          width: double.infinity,
-          constraints: const BoxConstraints(maxWidth: 600),
-          decoration: BoxDecoration(
-            color: isDark
-                ? AppColors.surface.withValues(alpha: 0.4)
-                : const Color(0xFFFCF9F2), // Cozy paper background
-            borderRadius: BorderRadius.circular(28),
-            border: Border.all(
-              color: isDark
-                  ? AppColors.surfaceVariant.withValues(alpha: 0.15)
-                  : const Color(0xFFF3EFE0),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.12 : 0.04),
-                blurRadius: 16,
-                offset: const Offset(0, 6),
-              ),
-            ],
+
+    return Stack(
+      children: [
+        // Background Blurred Image (to fill the screen without solid margins)
+        if (imgUrl.isNotEmpty) ...[
+          Positioned.fill(
+            child: CachedNetworkImage(imageUrl: imgUrl, fit: BoxFit.cover),
           ),
-          padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (imgUrl.isNotEmpty) ...[
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: CachedNetworkImage(
-                    imageUrl: imgUrl,
-                    fit: BoxFit.cover,
-                    placeholder: (_, _) => Container(
-                      height: 220,
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceVariant.withValues(alpha: 0.3),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Center(child: CircularProgressIndicator()),
+          Positioned.fill(
+            child: ClipRect(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+                child: Container(color: Colors.black.withValues(alpha: 0.3)),
+              ),
+            ),
+          ),
+
+          // Main Illustration (Fully visible, not cropped, not distorted)
+          Positioned.fill(
+            child: Padding(
+              padding: const EdgeInsets.only(
+                top: 16,
+                bottom:
+                    110, // Leaving space for the bottom glassmorphic text box
+                left: 16,
+                right: 16,
+              ),
+              child: CachedNetworkImage(
+                imageUrl: imgUrl,
+                fit: BoxFit.contain,
+                placeholder: (_, _) => _buildImagePlaceholder(isDark),
+                errorWidget: (_, _, _) => _buildImageError(isDark),
+              ),
+            ),
+          ),
+        ] else
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(gradient: AppColors.primaryGradient),
+              child: Center(
+                child: Icon(
+                  Icons.auto_stories_rounded,
+                  size: 64,
+                  color: Colors.white.withValues(alpha: 0.3),
+                ),
+              ),
+            ),
+          ),
+
+        // Text Overlay Container at the bottom
+        Align(
+          alignment: Alignment.bottomCenter,
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: 16,
+              right: 16,
+              bottom: 24, // Padding from bottom control bar
+              top:
+                  MediaQuery.of(context).size.height *
+                  0.1, // Don't cover top app bar area if text is long
+            ),
+            child: Container(
+              constraints: BoxConstraints(
+                maxWidth: 600,
+                maxHeight:
+                    MediaQuery.of(context).size.height *
+                    0.32, // Max 32% of screen height
+              ),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.black.withValues(alpha: 0.7)
+                    : Colors.white.withValues(alpha: 0.8),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.12)
+                      : Colors.white.withValues(alpha: 0.4),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.08),
+                    blurRadius: 18,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
                     ),
-                    errorWidget: (_, _, _) => const SizedBox.shrink(),
+                    child: Text(
+                      page.textContent,
+                      style: AppTextStyles.readerText.copyWith(
+                        fontSize: context
+                            .watch<SettingsViewModel>()
+                            .storyTextSize,
+                        height: 1.6,
+                        letterSpacing: 0.1,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white : const Color(0xFF1D1A26),
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 24),
-              ],
-              Text(
-                page.textContent,
-                style: AppTextStyles.readerText.copyWith(
-                  fontSize: context.watch<SettingsViewModel>().storyTextSize,
-                  height: 1.6,
-                  letterSpacing: 0.1,
-                  color: isDark
-                      ? AppColors.textPrimary
-                      : const Color(0xFF2E2C29),
-                ),
-                textAlign: TextAlign.center,
               ),
-            ],
+            ),
           ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildImagePlaceholder(bool isDark) {
+    final baseColor = isDark
+        ? const Color(0xFF2D2A3E)
+        : const Color(0xFFF0EBF8);
+    final highlightColor = isDark
+        ? const Color(0xFF37334C)
+        : const Color(0xFFF9F6FC);
+
+    return Shimmer.fromColors(
+      baseColor: baseColor,
+      highlightColor: highlightColor,
+      child: Container(
+        color: isDark ? const Color(0xFF2D2A3E) : const Color(0xFFF0EBF8),
+        child: Center(
+          child: Icon(
+            Icons.auto_stories_outlined,
+            size: 64,
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.1)
+                : Colors.black.withValues(alpha: 0.05),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImageError(bool isDark) {
+    return Container(
+      color: isDark ? const Color(0xFF2D2A3E) : const Color(0xFFF0EBF8),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.broken_image_rounded,
+              size: 48,
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.2)
+                  : Colors.black.withValues(alpha: 0.1),
+            ),
+          ],
         ),
       ),
     );
@@ -784,7 +932,9 @@ class _ReaderScreenState extends State<ReaderScreen> {
                 data: SliderThemeData(
                   trackHeight: 2.0,
                   trackShape: FullWidthTrackShape(),
-                  thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
+                  thumbShape: const RoundSliderThumbShape(
+                    enabledThumbRadius: 8,
+                  ),
                   thumbColor: AppColors.primary,
                   activeTrackColor: AppColors.primary,
                   inactiveTrackColor: AppColors.textHint.withValues(

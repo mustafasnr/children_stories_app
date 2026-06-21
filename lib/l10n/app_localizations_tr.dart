@@ -222,7 +222,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get settings_dark_mode => 'Karanlık Tema';
 
   @override
-  String get settings_story_sounds => 'Hikaye Sesleri';
+  String get settings_story_sounds => 'Ses Efektleri';
 
   @override
   String get settings_sign_out => 'Çıkış Yap';
@@ -425,6 +425,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get nav_explore => 'Keşfet';
 
   @override
+  String get explore_title => 'Hikayeleri Keşfet';
+
+  @override
   String get nav_library => 'Kütüphane';
 
   @override
@@ -435,6 +438,13 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get search_hint => 'Hikaye ara...';
+
+  @override
+  String get search_initial_title => 'Hikaye Ara';
+
+  @override
+  String get search_initial_desc =>
+      'Yukarıya yazarak en sevdiğiniz masal ve hikayeleri bulun.';
 
   @override
   String get search_no_results => 'Hikaye bulunamadı';
@@ -492,4 +502,7 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get update_optional_toast =>
       'Yeni bir güncelleme mevcut. Güncellemek için tıklayın!';
+
+  @override
+  String get generic_error => 'Bir hata oluştu. Lütfen tekrar deneyin.';
 }

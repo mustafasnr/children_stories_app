@@ -84,7 +84,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   toolbarHeight: kToolbarHeight,
                   titleSpacing: 16,
                   title: Text(
-                    localizations.login_title,
+                    localizations.explore_title,
                     style: AppTextStyles.displayMedium.copyWith(
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
