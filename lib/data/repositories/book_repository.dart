@@ -21,6 +21,53 @@ class BookRepository {
     return (data as List).map((e) => Language.fromJson(e)).toList();
   }
 
+  // ─── Story Counts by Age ──────────────────────────────────────────────────
+
+  static final Map<String, Map<int, int>> _storyCountsByAgeCache = {};
+
+  Future<Map<int, int>> getStoryCountsByAge({String? languageCode}) async {
+    final cacheKey = languageCode ?? 'all';
+    if (_storyCountsByAgeCache.containsKey(cacheKey)) {
+      return _storyCountsByAgeCache[cacheKey]!;
+    }
+    try {
+      var query = _client
+          .from(SupabaseConstants.booksTable)
+          .select('id, age_min, age_max');
+      if (languageCode != null && languageCode.isNotEmpty) {
+        query = _client
+            .from(SupabaseConstants.booksTable)
+            .select('id, age_min, age_max, book_translations!inner(language_code)')
+            .eq('book_translations.language_code', languageCode);
+      }
+      final data = await query;
+      final books = data as List<dynamic>;
+
+      int count3 = 0;
+      int count7 = 0;
+      int count11 = 0;
+
+      for (final b in books) {
+        final ageMin = (b['age_min'] as num?)?.toInt() ?? 0;
+        final ageMax = (b['age_max'] as num?)?.toInt() ?? 99;
+        if (ageMin <= 3 && ageMax >= 3) count3++;
+        if (ageMin <= 7 && ageMax >= 7) count7++;
+        if (ageMin <= 11 && ageMax >= 11) count11++;
+      }
+
+      final result = {
+        3: count3,
+        7: count7,
+        11: count11,
+      };
+      _storyCountsByAgeCache[cacheKey] = result;
+      return result;
+    } catch (e) {
+      debugPrint('[BookRepository] error getting story counts by age: $e');
+      return {3: 0, 7: 0, 11: 0};
+    }
+  }
+
   // ─── Categories (with translations) ──────────────────────────────────────
 
   Future<List<Category>> getCategoriesByLanguage(String languageCode) async {

@@ -2,6 +2,8 @@ import 'package:children_stories/app/theme/app_colors.dart';
 import 'package:children_stories/app/theme/app_text_styles.dart';
 import 'package:children_stories/l10n/app_localizations.dart';
 import 'package:children_stories/viewmodels/auth_viewmodel.dart';
+import 'package:children_stories/viewmodels/home_viewmodel.dart';
+import 'package:children_stories/viewmodels/settings_viewmodel.dart';
 import 'package:children_stories/views/settings/widgets/preferences_bottom_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -111,10 +113,19 @@ class PreferencesTile extends StatelessWidget {
             ],
           ),
           onTap: () {
+            String? langCode;
+            try {
+              langCode = context.read<HomeViewModel>().selectedLanguage?.code;
+            } catch (_) {}
+            try {
+              langCode ??= context.read<SettingsViewModel>().appLanguageCode;
+            } catch (_) {}
+
             PreferencesBottomSheet.show(
               context,
               initialAge: age,
               initialGender: gender,
+              languageCode: langCode,
             );
           },
         ),

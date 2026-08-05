@@ -2,25 +2,28 @@ import 'package:children_stories/app/theme/app_colors.dart';
 import 'package:children_stories/app/theme/app_text_styles.dart';
 import 'package:children_stories/core/constants/app_icons.dart';
 import 'package:children_stories/core/services/toast_service.dart';
+import 'package:children_stories/core/utils/story_count_formatter.dart';
+import 'package:children_stories/data/repositories/book_repository.dart';
 import 'package:children_stories/l10n/app_localizations.dart';
 import 'package:children_stories/viewmodels/auth_viewmodel.dart';
+import 'package:children_stories/viewmodels/home_viewmodel.dart';
+import 'package:children_stories/viewmodels/settings_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AgeRangeOption {
   final String label;
   final String subtitle;
   final String iconPath;
   final int representativeAge;
-  final String storyCount;
 
   const AgeRangeOption({
     required this.label,
     required this.subtitle,
     required this.iconPath,
     required this.representativeAge,
-    required this.storyCount,
   });
 }
 
@@ -30,21 +33,18 @@ const List<AgeRangeOption> ageRangeOptions = [
     subtitle: 'Picture books, lullabies & simple tales',
     iconPath: 'assets/icons/magic.svg',
     representativeAge: 3,
-    storyCount: '150+ Stories',
   ),
   AgeRangeOption(
     label: '6 - 9 Years Old',
     subtitle: 'Adventures, early readers & fairy tales',
     iconPath: 'assets/icons/rocket.svg',
     representativeAge: 7,
-    storyCount: '350+ Stories',
   ),
   AgeRangeOption(
     label: '10 - 12 Years Old',
     subtitle: 'Chapter books, fantasy & mysteries',
     iconPath: 'assets/icons/books.svg',
     representativeAge: 11,
-    storyCount: '200+ Stories',
   ),
 ];
 
@@ -74,33 +74,23 @@ String _getAgeSubtitle(int age, AppLocalizations l10n) {
   }
 }
 
-String _getAgeStories(int age, AppLocalizations l10n) {
-  switch (age) {
-    case 3:
-      return l10n.onboarding_age_stories_3;
-    case 7:
-      return l10n.onboarding_age_stories_7;
-    case 11:
-      return l10n.onboarding_age_stories_11;
-    default:
-      return '';
-  }
-}
-
 class PreferencesBottomSheet extends StatefulWidget {
   final int? initialAge;
   final String? initialGender;
+  final String? languageCode;
 
   const PreferencesBottomSheet({
     super.key,
     this.initialAge,
     this.initialGender,
+    this.languageCode,
   });
 
   static void show(
     BuildContext context, {
     int? initialAge,
     String? initialGender,
+    String? languageCode,
   }) {
     showModalBottomSheet(
       context: context,
@@ -109,6 +99,7 @@ class PreferencesBottomSheet extends StatefulWidget {
       builder: (context) => PreferencesBottomSheet(
         initialAge: initialAge,
         initialGender: initialGender,
+        languageCode: languageCode,
       ),
     );
   }
@@ -121,12 +112,55 @@ class _PreferencesBottomSheetState extends State<PreferencesBottomSheet> {
   int? _selectedAge;
   String? _selectedGender;
   bool _isSaving = false;
+  Map<int, int>? _storyCounts;
 
   @override
   void initState() {
     super.initState();
     _selectedAge = widget.initialAge;
     _selectedGender = widget.initialGender;
+    _loadStoryCounts();
+  }
+
+  Future<void> _loadStoryCounts() async {
+    try {
+      String? langCode = widget.languageCode;
+      if (langCode == null || langCode.isEmpty) {
+        try {
+          langCode = context.read<HomeViewModel>().selectedLanguage?.code;
+        } catch (_) {}
+      }
+      if (langCode == null || langCode.isEmpty) {
+        try {
+          langCode = context.read<SettingsViewModel>().appLanguageCode;
+        } catch (_) {}
+      }
+      if (langCode == null || langCode.isEmpty) {
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          langCode = prefs.getString('selected_language_code');
+        } catch (_) {}
+      }
+
+      final counts = await BookRepository().getStoryCountsByAge(languageCode: langCode);
+      if (mounted) {
+        setState(() {
+          _storyCounts = counts;
+        });
+      }
+    } catch (e) {
+      debugPrint('[PreferencesBottomSheet] error loading story counts: $e');
+    }
+  }
+
+  String _getAgeStoryBadge(int age, AppLocalizations l10n) {
+    if (_storyCounts != null && _storyCounts!.containsKey(age)) {
+      final count = _storyCounts![age]!;
+      return l10n.explore_story_count(formatStoryCount(count));
+    }
+    // Instant initial fallback while loading
+    final defaultCount = age == 3 ? 7 : (age == 7 ? 11 : 4);
+    return l10n.explore_story_count(formatStoryCount(defaultCount));
   }
 
   @override
@@ -214,7 +248,9 @@ class _PreferencesBottomSheetState extends State<PreferencesBottomSheet> {
                         child: _buildSelectionCard(
                           title: _getAgeTitle(range.representativeAge, localizations),
                           subtitle: _getAgeSubtitle(range.representativeAge, localizations),
-                          badgeText: _getAgeStories(range.representativeAge, localizations),
+                          badgeText: _getAgeStoryBadge(range.representativeAge, localizations).isEmpty
+                              ? null
+                              : _getAgeStoryBadge(range.representativeAge, localizations),
                           leading: SvgPicture.asset(
                             range.iconPath,
                             width: 20,

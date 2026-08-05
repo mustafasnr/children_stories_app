@@ -582,43 +582,61 @@ class _ReaderScreenState extends State<ReaderScreen> {
                               child: AnimatedOpacity(
                                 opacity: _showPageIndicator ? 1.0 : 0.0,
                                 duration: const Duration(milliseconds: 300),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 8,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: isDark
-                                        ? AppColors.surface.withValues(
-                                            alpha: 0.9,
-                                          )
-                                        : Colors.white.withValues(alpha: 0.9),
-                                    borderRadius: BorderRadius.circular(100),
-                                    border: Border.all(
-                                      color: isDark
-                                          ? Colors.white.withValues(alpha: 0.12)
-                                          : AppColors.textHint.withValues(
-                                              alpha: 0.15,
-                                            ),
-                                      width: 1,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(100),
+                                  child: BackdropFilter(
+                                    filter: ImageFilter.blur(
+                                      sigmaX: 12,
+                                      sigmaY: 12,
                                     ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(
-                                          alpha: isDark ? 0.2 : 0.05,
-                                        ),
-                                        blurRadius: 10,
-                                        offset: const Offset(0, 4),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 8,
                                       ),
-                                    ],
-                                  ),
-                                  child: Text(
-                                    '${vm.currentPageIndex + 1} / ${vm.totalPages}',
-                                    style: AppTextStyles.labelSmall.copyWith(
-                                      color: AppColors.textPrimary,
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 12,
-                                      letterSpacing: 0.5,
+                                      decoration: BoxDecoration(
+                                        color: isDark
+                                            ? const Color(
+                                                0xFF252136,
+                                              ).withValues(alpha: 0.85)
+                                            : Colors.white.withValues(
+                                                alpha: 0.85,
+                                              ),
+                                        borderRadius: BorderRadius.circular(
+                                          100,
+                                        ),
+                                        border: Border.all(
+                                          color: isDark
+                                              ? Colors.white.withValues(
+                                                  alpha: 0.15,
+                                                )
+                                              : AppColors.textHint.withValues(
+                                                  alpha: 0.2,
+                                                ),
+                                          width: 1,
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(
+                                              alpha: isDark ? 0.25 : 0.05,
+                                            ),
+                                            blurRadius: 10,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Text(
+                                        '${vm.currentPageIndex + 1} / ${vm.totalPages}',
+                                        style: AppTextStyles.labelSmall
+                                            .copyWith(
+                                              color: isDark
+                                                  ? const Color(0xFFF5EEFF)
+                                                  : const Color(0xFF1D1A26),
+                                              fontWeight: FontWeight.w800,
+                                              fontSize: 12,
+                                              letterSpacing: 0.5,
+                                            ),
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -816,16 +834,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                     0.32, // Max 32% of screen height
               ),
               decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.black.withValues(alpha: 0.7)
-                    : Colors.white.withValues(alpha: 0.8),
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.12)
-                      : Colors.white.withValues(alpha: 0.4),
-                  width: 1.5,
-                ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.08),
@@ -837,24 +846,40 @@ class _ReaderScreenState extends State<ReaderScreen> {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(24),
                 child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 16,
-                    ),
-                    child: Text(
-                      page.textContent,
-                      style: AppTextStyles.readerText.copyWith(
-                        fontSize: context
-                            .watch<SettingsViewModel>()
-                            .storyTextSize,
-                        height: 1.6,
-                        letterSpacing: 0.1,
-                        fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white : const Color(0xFF1D1A26),
+                  filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? const Color(0xFF252136).withValues(alpha: 0.85)
+                          : Colors.white.withValues(alpha: 0.85),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.15)
+                            : Colors.white.withValues(alpha: 0.6),
+                        width: 1.5,
                       ),
-                      textAlign: TextAlign.center,
+                    ),
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 22,
+                        vertical: 18,
+                      ),
+                      child: Text(
+                        page.textContent,
+                        style: AppTextStyles.readerText.copyWith(
+                          fontSize: context
+                              .watch<SettingsViewModel>()
+                              .storyTextSize,
+                          height: 1.6,
+                          letterSpacing: 0.1,
+                          fontWeight: FontWeight.w600,
+                          color: isDark
+                              ? const Color(0xFFF5EEFF)
+                              : const Color(0xFF1D1A26),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
                     ),
                   ),
                 ),

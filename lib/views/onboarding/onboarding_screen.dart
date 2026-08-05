@@ -1,6 +1,8 @@
 import 'package:children_stories/app/theme/app_colors.dart';
 import 'package:children_stories/app/theme/app_text_styles.dart';
 import 'package:children_stories/core/constants/app_icons.dart';
+import 'package:children_stories/core/utils/story_count_formatter.dart';
+import 'package:children_stories/data/repositories/book_repository.dart';
 import 'package:children_stories/l10n/app_localizations.dart';
 import 'package:children_stories/viewmodels/auth_viewmodel.dart';
 import 'package:children_stories/viewmodels/onboarding_viewmodel.dart';
@@ -14,14 +16,12 @@ class AgeRange {
   final String subtitle;
   final String iconPath;
   final int representativeAge;
-  final String storyCount;
 
   const AgeRange({
     required this.label,
     required this.subtitle,
     required this.iconPath,
     required this.representativeAge,
-    required this.storyCount,
   });
 }
 
@@ -31,21 +31,18 @@ const List<AgeRange> ageRanges = [
     subtitle: 'Picture books, lullabies & simple tales',
     iconPath: 'assets/icons/magic.svg',
     representativeAge: 3,
-    storyCount: '150+ Stories',
   ),
   AgeRange(
     label: '6 - 9 Years Old',
     subtitle: 'Adventures, early readers & fairy tales',
     iconPath: 'assets/icons/rocket.svg',
     representativeAge: 7,
-    storyCount: '350+ Stories',
   ),
   AgeRange(
     label: '10 - 12 Years Old',
     subtitle: 'Chapter books, fantasy & mysteries',
     iconPath: 'assets/icons/books.svg',
     representativeAge: 11,
-    storyCount: '200+ Stories',
   ),
 ];
 
@@ -75,19 +72,6 @@ String _getAgeSubtitle(int age, AppLocalizations l10n) {
   }
 }
 
-String _getAgeStories(int age, AppLocalizations l10n) {
-  switch (age) {
-    case 3:
-      return l10n.onboarding_age_stories_3;
-    case 7:
-      return l10n.onboarding_age_stories_7;
-    case 11:
-      return l10n.onboarding_age_stories_11;
-    default:
-      return '';
-  }
-}
-
 class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});
 
@@ -110,6 +94,33 @@ class _OnboardingScreenContent extends StatefulWidget {
 
 class __OnboardingScreenContentState extends State<_OnboardingScreenContent> {
   final PageController _pageController = PageController();
+  Map<int, int>? _storyCounts;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStoryCounts();
+  }
+
+  Future<void> _loadStoryCounts() async {
+    try {
+      final counts = await BookRepository().getStoryCountsByAge();
+      if (mounted) {
+        setState(() {
+          _storyCounts = counts;
+        });
+      }
+    } catch (_) {}
+  }
+
+  String _getAgeStoryBadge(int age, AppLocalizations l10n) {
+    if (_storyCounts != null && _storyCounts!.containsKey(age)) {
+      final count = _storyCounts![age]!;
+      return l10n.explore_story_count(formatStoryCount(count));
+    }
+    final defaultCount = age == 3 ? 7 : (age == 7 ? 11 : 4);
+    return l10n.explore_story_count(formatStoryCount(defaultCount));
+  }
 
   @override
   void dispose() {
@@ -184,7 +195,9 @@ class __OnboardingScreenContentState extends State<_OnboardingScreenContent> {
                   child: _buildSelectionCard(
                     title: _getAgeTitle(range.representativeAge, localizations),
                     subtitle: _getAgeSubtitle(range.representativeAge, localizations),
-                    badgeText: _getAgeStories(range.representativeAge, localizations),
+                    badgeText: _getAgeStoryBadge(range.representativeAge, localizations).isEmpty
+                        ? null
+                        : _getAgeStoryBadge(range.representativeAge, localizations),
                     leading: SvgPicture.asset(
                       range.iconPath,
                       width: 24,

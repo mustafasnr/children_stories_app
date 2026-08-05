@@ -1,6 +1,7 @@
 import 'package:children_stories/app/theme/app_colors.dart';
 import 'package:children_stories/app/theme/app_text_styles.dart';
 import 'package:children_stories/core/constants/app_icons.dart';
+import 'package:children_stories/core/utils/story_count_formatter.dart';
 import 'package:children_stories/data/models/language_model.dart';
 import 'package:children_stories/l10n/app_localizations.dart';
 import 'package:country_flags/country_flags.dart';
@@ -59,18 +60,6 @@ class _StoryLanguageBottomSheetState extends State<StoryLanguageBottomSheet> {
         });
       }
     });
-  }
-
-  String _formatStoryCount(int count) {
-    if (count < 10) return '$count';
-    if (count < 50) return '+10';
-    if (count < 100) return '+50';
-    if (count < 500) return '+100';
-    if (count < 1000) return '+500';
-    if (count < 2500) return '+1000';
-    if (count < 5000) return '+2500';
-    if (count < 10000) return '+5000';
-    return '+10000';
   }
 
   Future<void> _loadVoiceSelection() async {
@@ -279,7 +268,7 @@ class _StoryLanguageBottomSheetState extends State<StoryLanguageBottomSheet> {
                                                   BorderRadius.circular(10),
                                             ),
                                             child: Text(
-                                              AppLocalizations.of(context)!.explore_story_count(_formatStoryCount(lang.storyCount)),
+                                              AppLocalizations.of(context)!.explore_story_count(formatStoryCount(lang.storyCount)),
                                               style: AppTextStyles.labelSmall
                                                   .copyWith(
                                                     color: isSelected
